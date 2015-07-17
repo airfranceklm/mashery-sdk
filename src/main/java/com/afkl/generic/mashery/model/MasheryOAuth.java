@@ -71,11 +71,11 @@ public class MasheryOAuth {
 		this.accessTokenType = accessTokenType;
 	}
 
-	public boolean isAllowMultipleTokens() {
+	public boolean isAllowMultipleToken() {
 		return allowMultipleToken;
 	}
 
-	public void setAllowMultipleTokens(boolean allowMultipleToken) {
+	public void setAllowMultipleToken(boolean allowMultipleToken) {
 		this.allowMultipleToken = allowMultipleToken;
 	}
 

@@ -10,7 +10,7 @@ public class MasheryMethod implements MasheryResource {
 
 	private String id;
 
-	private String methodName;
+	private String name;
 
 	private String sampleJsonResponse;
 
@@ -30,12 +30,12 @@ public class MasheryMethod implements MasheryResource {
 		this.id = id;
 	}
 
-	public String getMethodName() {
-		return methodName;
+	public String getName() {
+		return name;
 	}
 
-	public void setMethodName(String methodName) {
-		this.methodName = methodName;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getSampleJsonResponse() {
