@@ -4,7 +4,28 @@
 > SDK built on top of Intel-Mashery's V3 API.
 
 ##Usage
-> Coming soon...
+
+Creating a Mashery Client
+
+```java
+public Map<String, String> oauthRequestParams = new HashMap<String, String>();
+
+oauthRequestParams.put("grant_type", "password");
+oauthRequestParams.put("username", "fakeMasheryUserName");
+oauthRequestParams.put("password", "fakeMasheryPassword");
+oauthRequestParams.put("scope", "fakeMasheryUUID");
+			
+public MasheryClient client = MasheryClientBuilder.masheryClient()
+				.withHost("api.mashery.com")
+				.withProtocol("https")
+				.withPort(443)
+				.withApiKey("fakeApiKey")
+				.withApiSecret("fakeApiSecret").
+				withTokenRequestParams(oauthRequestParams)
+				.build();
+```
+
+> More coming soon...
 
 ## TODO
 - Add Support for Error Sets
