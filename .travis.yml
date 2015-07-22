@@ -6,8 +6,3 @@ script: "mvn clean deploy --settings target/travis/settings.xml"
 branches:
   except:
     - travis
-
-env:
-  global:
-    - SONATYPE_USERNAME=fakeuser
-    - secure: fakestuff
