@@ -4,9 +4,9 @@
       <id>release</id>
       <properties>
         <gpg.passphrase>${env.PGP_PASSPHRASE}</gpg.passphrase>
-        <gpg.defaultKeyring>false</gpg.secretKeyring>
+        <gpg.defaultKeyring>false</gpg.defaultKeyring>
         <gpg.secretKeyring>/home/travis/secring/signingKeyRing.gpg</gpg.secretKeyring>
-        <gpg.publicKeyring>/home/travis/secring/pubKeyRing.gpg</gpg.secretKeyring>
+        <gpg.publicKeyring>/home/travis/secring/pubKeyRing.gpg</gpg.publicKeyring>
         <gpg.keyname>${env.PGP_DEFAULT_KEY}</gpg.keyname>
       </properties>
     </profile>
