@@ -5,7 +5,6 @@
       <properties>
         <gpg.passphrase>${env.PGP_PASSPHRASE}</gpg.passphrase>
         <gpg.secretKeyring>/home/travis/secring/signingKeyRing.gpg</gpg.secretKeyring>
-        <gpg.useagent>false</gpg.useagent>
       </properties>
     </profile>
   </profiles>
