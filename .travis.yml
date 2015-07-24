@@ -4,6 +4,8 @@ before_install:
   - "git clone -b travis `git config --get remote.origin.url` target/travis"
   - git clone https://$GIT_USER:$GIT_PWD@bitbucket.org/afklmdevnet/mavensign.git ~/secring
   - openssl aes-256-cbc -k "$PGP_DECRYPT_PWD" -in ~/secring/signingKeyRing.gpg.enc -out ~/secring/signingKeyRing.gpg -d
+  - echo $TRAVIS_BUILD_DIR
+  - echo ~
 
 script: "mvn clean deploy --settings target/travis/settings.xml"
 
