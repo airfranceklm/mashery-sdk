@@ -7,7 +7,11 @@ before_install:
   - echo $TRAVIS_BUILD_DIR
   - echo ~
 
-script: "mvn clean deploy -e --settings target/travis/settings.xml"
+script: 
+  - "mvn clean install --settings target/travis/settings.xml"
+  - gpg -ab --secret-keyring /home/travis/secring/signingKeyRing.gpg /home/travis/build/afklm/mashery-sdk/target/mashery-sdk-1.0.0.jar
+  - gpg -ab --secret-keyring /home/travis/secring/signingKeyRing.gpg /home/travis/build/afklm/mashery-sdk/target/mashery-sdk-1.0.0.pom
+  - "mvn deploy --settings target/travis/settings.xml"
 
 branches:
   except:
