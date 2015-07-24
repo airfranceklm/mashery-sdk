@@ -5,7 +5,7 @@
       <properties>
         <gpg.passphrase>${env.PGP_PASSPHRASE}</gpg.passphrase>
         <gpg.secretKeyring>/home/travis/secring/signingKeyRing.gpg</gpg.secretKeyring>
-        <gpg.ascDirectory>/home/travis/build/afklm/mashery-sdk/</gpg.ascDirectory>
+        <gpg.keyname>${env.PGP_DEFAULT_KEY}</gpg.keyname>
       </properties>
     </profile>
   </profiles>
