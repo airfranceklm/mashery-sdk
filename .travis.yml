@@ -7,7 +7,7 @@ before_install:
   - echo $TRAVIS_BUILD_DIR
   - echo ~
 
-script: "mvn clean deploy --settings target/travis/settings.xml"
+script: "mvn clean deploy -e --settings target/travis/settings.xml"
 
 branches:
   except:
