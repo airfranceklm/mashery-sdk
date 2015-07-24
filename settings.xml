@@ -3,6 +3,7 @@
     <profile>
       <id>release</id>
       <properties>
+        <gpg.passphrase>${env.PGP_PASSPHRASE}</gpg.passphrase>
         <gpg.secretKeyring>/home/travis/secring/signingKeyRing.gpg</gpg.secretKeyring>
       </properties>
     </profile>
