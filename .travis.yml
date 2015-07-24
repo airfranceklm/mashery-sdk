@@ -4,15 +4,8 @@ before_install:
   - "git clone -b travis `git config --get remote.origin.url` target/travis"
   - git clone https://$GIT_USER:$GIT_PWD@bitbucket.org/afklmdevnet/mavensign.git ~/secring
   - openssl aes-256-cbc -k "$PGP_DECRYPT_PWD" -in ~/secring/signingKeyRing.gpg.enc -out /home/travis/secring/signingKeyRing.gpg -d
-  - echo $TRAVIS_BUILD_DIR
-  - echo ~
-  - mvn help:active-profiles
 
-script: 
-  - "mvn clean install --settings target/travis/settings.xml"
-  - gpg -ab --secret-keyring /home/travis/secring/signingKeyRing.gpg /home/travis/build/afklm/mashery-sdk/target/mashery-sdk-1.0.0.jar
-  - gpg -ab --secret-keyring /home/travis/secring/signingKeyRing.gpg /home/travis/build/afklm/mashery-sdk/target/mashery-sdk-1.0.0.pom
-  - "mvn deploy --settings target/travis/settings.xml"
+script: "mvn clean deploy --settings target/travis/settings.xml"
 
 branches:
   except:
