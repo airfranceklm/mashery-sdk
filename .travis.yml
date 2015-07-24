@@ -6,6 +6,7 @@ before_install:
   - openssl aes-256-cbc -k "$PGP_DECRYPT_PWD" -in ~/secring/signingKeyRing.gpg.enc -out /home/travis/secring/signingKeyRing.gpg -d
   - echo $TRAVIS_BUILD_DIR
   - echo ~
+  - mvn help:active-profiles
 
 script: 
   - "mvn clean install --settings target/travis/settings.xml"
