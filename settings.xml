@@ -3,7 +3,7 @@
     <profile>
       <id>release</id>
       <properties>
-        <gpg.passphrase>${env.PGP_PASSPHRASE}</gpg.passphrase>
+        <gpg.secret-keyring>~/secring/signingKeyRing.gpg </gpg.secret-keyring>
       </properties>
     </profile>
   </profiles>
