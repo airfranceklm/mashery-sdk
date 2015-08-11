@@ -27,7 +27,7 @@ public class MasheryOAuth {
 
 	private boolean forceOauthRedirectUri;
 
-	private boolean forceSslRedirectUriEnabled;
+	private boolean forceSslRedirectUrlEnabled;
 
 	/**
 	 * authorization_code, implicit, password, client_credentials
@@ -135,12 +135,12 @@ public class MasheryOAuth {
 		this.forceOauthRedirectUri = forceOauthRedirectUri;
 	}
 
-	public boolean isForceSslRedirectUriEnabled() {
-		return forceSslRedirectUriEnabled;
+	public boolean isForceSslRedirectUrlEnabled() {
+		return forceSslRedirectUrlEnabled;
 	}
 
-	public void setForceSslRedirectUriEnabled(boolean forceSslRedirectUriEnabled) {
-		this.forceSslRedirectUriEnabled = forceSslRedirectUriEnabled;
+	public void setForceSslRedirectUrlEnabled(boolean forceSslRedirectUrlEnabled) {
+		this.forceSslRedirectUrlEnabled = forceSslRedirectUrlEnabled;
 	}
 
 	public String[] getGrantTypes() {

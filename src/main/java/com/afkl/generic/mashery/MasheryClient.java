@@ -36,6 +36,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Represents an Http Client used for making API calls to Mashery
@@ -48,11 +49,13 @@ public class MasheryClient {
 	// Specific Resource Paths
 	private static final String TOKEN_PATH = "/v3/token";
 	private static final String ROOT_PATH = "/v3/rest/";
-	private static final String ENDPOINTS_PATH = ROOT_PATH + "services/%s/endpoints";
 	private static final String SERVICES_PATH = ROOT_PATH + "services";
+	private static final String ENDPOINTS_PATH = SERVICES_PATH + "/%s/endpoints";
+	private static final String METHODS_PATH = ENDPOINTS_PATH + "/%s/methods";
 	private static final String PACKAGES_PATH = ROOT_PATH + "packages";
 	private static final String PLANS_PATH = PACKAGES_PATH + "/%s/plans";
 	private static final String PLAN_SERVICES_PATH = PLANS_PATH + "/%s/services";
+	private static final String PLAN_ENDPOINTS_PATH = PLAN_SERVICES_PATH + "/%s/endpoints";
 
 	private static final String FILTER_QUERY = "filter=name:";
 	private static final String GENERIC_JSON_RESOURCE = "{\"id\":\"%s\"}";
@@ -503,6 +506,109 @@ public class MasheryClient {
 		return true;
 	}
 
+	public boolean addMethodToPlan(String methodName, String endpointName, String planName, String serviceName, String packageName) {
+		// Validate Params are non empty
+		if (isEmpty(methodName) || isEmpty(endpointName) || isEmpty(planName) || isEmpty(serviceName) || isEmpty(endpointName))
+			return false;
+
+		if (readOnly) {
+			log.error("Attempted Modify operation. User has read only permissions");
+			return false;
+		}
+
+		String token = retrieveOauthToken();
+		if (token == null) {
+			log.error("Unable to retrieve OAuth token.");
+			return false;
+		}
+		String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
+		String endpointId = determineResourceIdFromName(endpointName, String.format(ENDPOINTS_PATH, serviceId));
+		String methodId = determineResourceIdFromName(methodName, String.format(METHODS_PATH, serviceId, endpointId));
+		String packageId = determineResourceIdFromName(packageName, PACKAGES_PATH);
+		String planId = determineResourceIdFromName(planName, String.format(PLANS_PATH, packageId));
+
+		String planMethodPath = String.format(PLAN_ENDPOINTS_PATH + "/%s", packageId, planId, serviceId, endpointId);
+
+		String resource = fetchResource(planMethodPath, "fields=methods");
+		if (resource == null) {
+			log.error("Specified Endpoint, " + endpointName + ", is not associated with the Plan " + planName);
+			return false;
+		}
+
+		// Create method Node
+		ObjectNode methodNode = mapper.createObjectNode();
+		methodNode.put("id", methodId);
+		methodNode.put("name", methodName);
+
+		JsonNode responseNode = null;
+		try {
+			responseNode = mapper.readTree(resource);
+			JsonNode methodsNode = responseNode.get("methods");
+			if (methodsNode == null) {
+				log.error("Error adding method to plan.");
+				return false;
+			}
+			((ArrayNode) methodsNode).add(methodNode);
+		} catch (JsonProcessingException e) {
+			log.error("Error adding method to plan. " + e);
+			return false;
+		} catch (IOException e) {
+			log.error("Error adding method to plan. " + e);
+			return false;
+		}
+
+		uriBuilder.removeQuery();
+		HttpPut put = null;
+		try {
+			put = new HttpPut(uriBuilder.setPath(planMethodPath).build());
+			put.addHeader(createAuthHeader(token));
+			put.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+			String putBody = mapper.writeValueAsString(responseNode);
+			put.setEntity(new StringEntity(putBody));
+		}  catch (URISyntaxException e) {
+			log.error("Error adding method to plan. " + e);
+			return false;
+		} catch (UnsupportedEncodingException e) {
+			log.error("Error adding method to plan. " + e);
+			return false;
+		} catch (JsonProcessingException e) {
+			log.error("Error adding method to plan. " + e);
+			return false;
+		}
+
+		HttpResponse response = null;
+		try {
+			response  = httpClient.execute(put);
+
+			if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+				if (response != null) {
+					String responseError = retrieveErrorFromResponse(response);
+					log.error("Error creating plan method " + put.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
+					log.error("Error Response: " + responseError);
+				} else {
+					log.error("Error creating plan method " + endpointId);
+				}
+				return false;
+			}
+
+		} catch (ClientProtocolException e) {
+			log.error("Error adding method to plan. " + e);
+			return false;
+		} catch (IOException e) {
+			log.error("Error adding method to plan. " + e);
+			return false;
+		} finally {
+			if (response != null)
+				try {
+					EntityUtils.consume(response.getEntity());
+				} catch (IOException e) {
+					// Ignore
+				}
+		}
+
+		return true;
+	}
+
 	/**
 	 * Convert the JSON error response to a string
 	 * @param response containing json error
@@ -586,6 +692,57 @@ public class MasheryClient {
 			return false;
 		} catch (URISyntaxException e) {
 			log.error("Error removing endpoint from plan. " + e);
+			return false;
+		} finally {
+			if (response != null)
+				try {
+					EntityUtils.consume(response.getEntity());
+				} catch (IOException e) {
+					// Ignore
+				}
+		}
+		return true;
+	}
+
+	public boolean removeMethodFromPlan(String methodName, String endpointName, String planName, String serviceName, String packageName) {
+
+		if (readOnly) {
+			log.error("Attempted Modify operation. User has read only permissions");
+			return false;
+		}
+
+		String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
+		String endpointId = determineResourceIdFromName(endpointName, String.format(ENDPOINTS_PATH, serviceId));
+		String methodId = determineResourceIdFromName(methodName, String.format(METHODS_PATH, serviceId, endpointId));
+		String packageId = determineResourceIdFromName(packageName, PACKAGES_PATH);
+		String planId = determineResourceIdFromName(planName, String.format(PLANS_PATH, packageId));
+
+		String planMethodPath = String.format(PLAN_ENDPOINTS_PATH + "/%s", packageId, planId, serviceId, endpointId);
+
+		String token = retrieveOauthToken();
+		if (token == null) {
+			log.error("Unable to retrieve OAuth token.");
+			return false;
+		}
+
+		HttpResponse response = null;
+		try {
+			uriBuilder.removeQuery();
+			HttpDelete delete = new HttpDelete(uriBuilder.setPath(planMethodPath + "/methods/" + methodId).build());
+			delete.addHeader(createAuthHeader(token));
+			response = httpClient.execute(delete);
+
+			if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
+				return false;
+
+		} catch (ClientProtocolException e) {
+			log.error("Error removing method from plan. " + e);
+			return false;
+		} catch (IOException e) {
+			log.error("Error removing method from plan. " + e);
+			return false;
+		} catch (URISyntaxException e) {
+			log.error("Error removing method from plan. " + e);
 			return false;
 		} finally {
 			if (response != null)
