@@ -71,6 +71,7 @@ public class MasheryClientTest extends TestCase {
 	// Defaults
 	String packageName = "testPackage";
 	String endpointName = "testEndpoint";
+	String methodName = "testMethod";
 	String planName = "testPlan";
 	String serviceName = "fakeService";
 
@@ -90,7 +91,7 @@ public class MasheryClientTest extends TestCase {
 		port = testServer.getServicePort();
 		host = testServer.getServiceHostName();
 
-		// System.out.println("LocalTestServer available via http://" + host + ":" + port);
+//		System.out.println("LocalTestServer available via http://" + host + ":" + port);
 
 		params = new HashMap<String, String>();
 		params.put("username", userName);
@@ -204,6 +205,23 @@ public class MasheryClientTest extends TestCase {
 	}
 
 	@Test
+	public void testAddMethodToPlan() {
+		assertTrue(client.addMethodToPlan(methodName, endpointName, planName, serviceName, packageName));
+	}
+
+	@Test
+	public void testAddMethodToPlanFail() {
+		testServer.register("/v3/rest/packages/*", new ErrorRequestHandler());
+		assertFalse(client.addMethodToPlan(methodName, endpointName, planName, serviceName, packageName));
+	}
+
+	@Test
+	public void testRemoveMethodToPlan() {
+		assertTrue(client.removeMethodFromPlan(methodName, endpointName, planName, serviceName, packageName));
+	}
+
+
+	@Test
 	public void testModifyResourceFail() {
 		testServer.register("/v3/rest/services/*", new ErrorRequestHandler());
 		resource =  new MasheryEndpoint();
@@ -267,13 +285,13 @@ public class MasheryClientTest extends TestCase {
 			// Verify Credentials
 			Header authHeader = request.getFirstHeader(HttpHeaders.AUTHORIZATION);
 			if (authHeader == null) {
-				// Assert.fail("No Auth Header included in Token Request");
+//				Assert.fail("No Auth Header included in Token Request");
 				return;
 			}
 
 			String[] pieces = authHeader.getValue().split(" ");
 			if (pieces.length != 2 || !"Basic".equals(pieces[0])) {
-				// Assert.fail("Auth header incorrectly formatter");
+//				Assert.fail("Auth header incorrectly formatter");
 				return;
 			}
 
@@ -281,7 +299,7 @@ public class MasheryClientTest extends TestCase {
 			String[] authPieces = auth.split(":");
 
 			if (authPieces.length != 2 || !apiKey.equals(authPieces[0]) || !apiSecret.equals(authPieces[1])) {
-				// Assert.fail("Authentication credentials incorrect");
+//				Assert.fail("Authentication credentials incorrect");
 				return;
 			}
 
@@ -290,7 +308,7 @@ public class MasheryClientTest extends TestCase {
 
 			for (String key : params.keySet()) {
 				if (!requestPayload.contains(key + "=" + params.get(key))) {
-					// Assert.fail("Parameter " + key + " missing from Requset Payload");
+//					Assert.fail("Parameter " + key + " missing from Request Payload");
 					return;
 				}
 			}
@@ -329,7 +347,12 @@ public class MasheryClientTest extends TestCase {
 			}
 
 			response.setStatusLine(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
-			response.setEntity(new StringEntity("{\"id\":\"" + resourceId  + "\"}"));
+
+			if (request.getRequestLine().getUri().contains("fields=methods")) {
+				response.setEntity(new StringEntity("{\"methods\":[]}"));
+			} else {
+				response.setEntity(new StringEntity("{\"id\":\"" + resourceId  + "\"}"));
+			}
 		}
 
 	}
