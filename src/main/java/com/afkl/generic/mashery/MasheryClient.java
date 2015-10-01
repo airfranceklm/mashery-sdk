@@ -31,6 +31,7 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.afkl.generic.mashery.model.MasheryMethod;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -508,7 +509,7 @@ public class MasheryClient {
 
 	public boolean addMethodToPlan(String methodName, String endpointName, String planName, String serviceName, String packageName) {
 		// Validate Params are non empty
-		if (isEmpty(methodName) || isEmpty(endpointName) || isEmpty(planName) || isEmpty(serviceName) || isEmpty(endpointName))
+		if (isEmpty(methodName) || isEmpty(endpointName) || isEmpty(planName) || isEmpty(serviceName))
 			return false;
 
 		if (readOnly) {
@@ -516,11 +517,6 @@ public class MasheryClient {
 			return false;
 		}
 
-		String token = retrieveOauthToken();
-		if (token == null) {
-			log.error("Unable to retrieve OAuth token.");
-			return false;
-		}
 		String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
 		String endpointId = determineResourceIdFromName(endpointName, String.format(ENDPOINTS_PATH, serviceId));
 		String methodId = determineResourceIdFromName(methodName, String.format(METHODS_PATH, serviceId, endpointId));
@@ -539,6 +535,17 @@ public class MasheryClient {
 		ObjectNode methodNode = mapper.createObjectNode();
 		methodNode.put("id", methodId);
 		methodNode.put("name", methodName);
+
+		return addMethodNode(methodNode, resource, planMethodPath, endpointId);
+	}
+
+	private boolean addMethodNode(ObjectNode methodNode, String resource, String planMethodPath, String endpointId) {
+
+		String token = retrieveOauthToken();
+		if (token == null) {
+			log.error("Unable to retrieve OAuth token.");
+			return false;
+		}
 
 		JsonNode responseNode = null;
 		try {
@@ -578,7 +585,7 @@ public class MasheryClient {
 
 		HttpResponse response = null;
 		try {
-			response  = httpClient.execute(put);
+			response = httpClient.execute(put);
 
 			if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
 				if (response != null) {
@@ -607,6 +614,36 @@ public class MasheryClient {
 		}
 
 		return true;
+	}
+
+	public boolean addMethodToPlan(MasheryMethod method, String planName, String serviceName, String packageName, String endpointName) {
+		// Validate Params are non empty
+		if (isEmpty(method.getName()) || isEmpty(planName) || isEmpty(serviceName) || isEmpty(endpointName))
+			return false;
+
+		if (readOnly) {
+			log.error("Attempted Modify operation. User has read only permissions");
+			return false;
+		}
+
+		String endpointId = determineResourceIdFromName(endpointName, ENDPOINTS_PATH);
+		String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
+		String methodId = determineResourceIdFromName(method.getName(), String.format(METHODS_PATH, serviceId, endpointId));
+		String packageId = determineResourceIdFromName(packageName, PACKAGES_PATH);
+		String planId = determineResourceIdFromName(planName, String.format(PLANS_PATH, packageId));
+
+		String planMethodPath = String.format(PLAN_ENDPOINTS_PATH + "/%s", packageId, planId, serviceId, endpointId);
+
+		String resource = fetchResource(planMethodPath, "fields=methods");
+		if (resource == null) {
+			log.error("Specified Method, " + method.getName() + ", is not associated with the Plan " + planName);
+			return false;
+		}
+
+		method.setId(methodId);
+		ObjectNode methodNode = mapper.valueToTree(method);
+
+		return addMethodNode(methodNode, resource, planMethodPath, endpointId);
 	}
 
 	/**

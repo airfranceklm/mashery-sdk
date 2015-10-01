@@ -32,6 +32,7 @@ import com.afkl.generic.mashery.MasheryClientBuilder;
 import com.afkl.generic.mashery.MasheryResource;
 import com.afkl.generic.mashery.OAuthTokenService;
 import com.afkl.generic.mashery.model.MasheryEndpoint;
+import com.afkl.generic.mashery.model.MasheryMethod;
 import com.afkl.generic.mashery.model.MasheryPackage;
 import com.afkl.generic.mashery.model.MasheryPlan;
 import com.afkl.generic.mashery.model.MasheryService;
@@ -210,6 +211,14 @@ public class MasheryClientTest extends TestCase {
 	}
 
 	@Test
+	public void testAddMethodObjectToPlan() {
+		MasheryMethod method = new MasheryMethod();
+		method.setEndpointId("testEndpointID");
+		method.setName("testMethodName");
+		assertTrue(client.addMethodToPlan(method, planName, serviceName, packageName, endpointName));
+	}
+
+	@Test
 	public void testAddMethodToPlanFail() {
 		testServer.register("/v3/rest/packages/*", new ErrorRequestHandler());
 		assertFalse(client.addMethodToPlan(methodName, endpointName, planName, serviceName, packageName));
@@ -354,7 +363,6 @@ public class MasheryClientTest extends TestCase {
 				response.setEntity(new StringEntity("{\"id\":\"" + resourceId  + "\"}"));
 			}
 		}
-
 	}
 
 	class ErrorRequestHandler implements HttpRequestHandler {
