@@ -626,8 +626,8 @@ public class MasheryClient {
 			return false;
 		}
 
-		String endpointId = determineResourceIdFromName(endpointName, ENDPOINTS_PATH);
 		String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
+		String endpointId = determineResourceIdFromName(endpointName, String.format(ENDPOINTS_PATH, serviceId));
 		String methodId = determineResourceIdFromName(method.getName(), String.format(METHODS_PATH, serviceId, endpointId));
 		String packageId = determineResourceIdFromName(packageName, PACKAGES_PATH);
 		String planId = determineResourceIdFromName(planName, String.format(PLANS_PATH, packageId));
