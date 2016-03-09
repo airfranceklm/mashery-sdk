@@ -76,6 +76,8 @@ public class MasheryClient {
 
 	private static ObjectMapper mapper;
 
+    private String newLine = System.getProperty("line.separator");
+
 	public MasheryClient(MasheryClientBuilder builder) {
 		//Validate all parameters are present
 		if (builder.host == null) throw new NullPointerException("host");
@@ -121,20 +123,20 @@ public class MasheryClient {
 
 		if (isEmpty(path)) {
 			log.error("Cannot delete resource, path is empty");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY + "Delete Resource.");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Delete Resource.");
             //return false;
 		}
 
 		if (readOnly) {
 			log.error("Attempted Delete operation. User has read only permissions");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM + "Delete Resource.");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM.getDescription() + "Delete Resource.");
             //return false;
 		}
 
 		String[] tokenResponse = retrieveOauthToken();
 		if (tokenResponse[0] == null && tokenResponse[1] != null) {
 			log.error("Unable to retrieve OAuth token.");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED + "-" + tokenResponse[1]);
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED.getDescription() + newLine + tokenResponse[1]);
             //return false;
 		}
 		HttpDelete delete = null;
@@ -142,7 +144,7 @@ public class MasheryClient {
 			delete = new HttpDelete(uriBuilder.setPath(path).build());
 		} catch (URISyntaxException e) {
 			log.error("Cannot delete Resource, incorrect URI.");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Cannot delete Resource. " + MasheryClientError.URI_SYNTAX_EXCEPTION + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Cannot delete Resource. " + MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return false;
 		}
 		delete.addHeader(createAuthHeader(tokenResponse[0]));
@@ -155,11 +157,11 @@ public class MasheryClient {
 			statusCode = response.getStatusLine().getStatusCode();
 		} catch (ClientProtocolException e) {
 			log.error("Error deleting resource: " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error deleting resource ." + MasheryClientError.CLIENT_PROTOCOL_EXCEPTION + " : " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error deleting resource ." + MasheryClientError.CLIENT_PROTOCOL_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return false;
 		} catch (IOException e) {
 			log.error("Error deleting resource: " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error deleting resource ." + MasheryClientError.IO_EXCEPTION + " : " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error deleting resource ." + MasheryClientError.IO_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return false;
 		} finally {
 			if (response != null)
@@ -172,7 +174,7 @@ public class MasheryClient {
 
 		if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
 			OAuthTokenService.INSTANCE.clearToken();
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.TOKEN_UNAUTHORIZED.toString());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.TOKEN_UNAUTHORIZED.getDescription());
 		}
 
 		//return statusCode == HttpStatus.SC_OK;
@@ -189,13 +191,13 @@ public class MasheryClient {
 
 		if (resource == null) {
 			log.error("Cannot create resource, resource is null");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY + "Create Resource.");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Create Resource.");
             //return null;
 		}
 
 		if (readOnly) {
 			log.error("Attempted Create operation. User has read only permissions");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM + "Create Resource.");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM.getDescription() + "Create Resource.");
             //return null;
 		}
 
@@ -203,7 +205,7 @@ public class MasheryClient {
 
 		if (tokenResponse[0] == null && tokenResponse[1] != null) {
 			log.error("Unable to retrieve OAuth token.");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED + "-" + tokenResponse[1]);
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED.getDescription() + newLine + tokenResponse[1]);
             //return null;
 		}
 		HttpPost post;
@@ -217,15 +219,15 @@ public class MasheryClient {
 			post.addHeader(createAuthHeader(tokenResponse[0]));
 		} catch (URISyntaxException e) {
 			log.error("Error creating resource: " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error creating resource: " + MasheryClientError.URI_SYNTAX_EXCEPTION + " : " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error creating resource: " + MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return null;
 		} catch (JsonProcessingException e) {
 			log.error("Error creating resource: " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error creating resource: " + MasheryClientError.JSON_PROCESSING_EXCEPTION + " : " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error creating resource: " + MasheryClientError.JSON_PROCESSING_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return null;
 		} catch (UnsupportedEncodingException e) {
 			log.error("Error creating resource: " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error creating resource: " + MasheryClientError.UNSUPPORTED_ENCODING_EXCEPTION + " : " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error creating resource: " + MasheryClientError.UNSUPPORTED_ENCODING_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return null;
 		}
 
@@ -238,7 +240,7 @@ public class MasheryClient {
 
 			if (response == null) {
                 log.error("Could not create resource. No response from API.");
-                return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API+ "Create Resource.");
+                return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription() + "Create Resource.");
                 //return null;
 			}
 
@@ -246,12 +248,12 @@ public class MasheryClient {
 
 			if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
 				OAuthTokenService.INSTANCE.clearToken();
-                return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.TOKEN_UNAUTHORIZED.toString());
+                return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.TOKEN_UNAUTHORIZED.getDescription());
                 //return null;
 			} else if (statusCode != HttpStatus.SC_OK) {
 				log.error("Response error: " + response.getStatusLine().getStatusCode());
 				log.error(retrieveErrorFromResponse(response));
-				return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.RESPONSE_ERROR_FROM_API+" - Response Status: " + response.getStatusLine().getStatusCode());
+				return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription()+ newLine + "Response Status: " + response.getStatusLine().getStatusCode());
                 //return null;
 			}
 
@@ -261,10 +263,10 @@ public class MasheryClient {
 			}
 		} catch (ClientProtocolException e) {
 			log.error("Error creating resource: " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error creating resource: " + MasheryClientError.CLIENT_PROTOCOL_EXCEPTION + " : " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Error creating resource: " + MasheryClientError.CLIENT_PROTOCOL_EXCEPTION.getDescription() + newLine + e.getMessage());
         } catch (IOException e) {
 			log.error("Error creating resource: " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error creating resource: " + MasheryClientError.IO_EXCEPTION + " : " +e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error creating resource: " + MasheryClientError.IO_EXCEPTION.getDescription() + newLine +e.getMessage());
 		} finally {
 			if (response != null)
 				try {
@@ -289,20 +291,20 @@ public class MasheryClient {
 
 		if (resource == null) {
 			log.error("Cannot modify resource, resource is null");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY + "Modify Resource");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Modify Resource");
             //return false;
 		}
 
 		if (readOnly) {
 			log.error("Attempted Modify operation. User has read only permissions");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM + "Modify Resource");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM.getDescription() + "Modify Resource");
             //return false;
 		}
 
 		String[] tokenResponse = retrieveOauthToken();
 		if (tokenResponse[0] == null && tokenResponse[1] != null) {
 			log.error("Unable to retrieve OAuth token.");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED + "-" + tokenResponse[1]);
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED.getDescription() + newLine + tokenResponse[1]);
             //return false;
 		}
 		HttpPut put = null;
@@ -316,15 +318,15 @@ public class MasheryClient {
 			put.addHeader(createAuthHeader(tokenResponse[0]));
 		} catch (URISyntaxException e) {
 			log.error("Error modifying resource. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.URI_SYNTAX_EXCEPTION + " : " +e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + newLine +e.getMessage());
             //return false;
 		} catch (JsonProcessingException e) {
 			log.error("Error modifying resource. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.JSON_PROCESSING_EXCEPTION + " : " +e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.JSON_PROCESSING_EXCEPTION.getDescription() + newLine +e.getMessage());
             //return false;
 		} catch (UnsupportedEncodingException e) {
 			log.error("Error modifying resource. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.UNSUPPORTED_ENCODING_EXCEPTION + " : " +e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.UNSUPPORTED_ENCODING_EXCEPTION.getDescription() + newLine +e.getMessage());
             //return false;
 		}
 
@@ -334,7 +336,7 @@ public class MasheryClient {
 			response = httpClient.execute(put);
 			if (response == null) {
 				log.error("Could not modify resource. No response from API.");
-                return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.NO_RESPONSE_FROM_API.toString());
+                return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.NO_RESPONSE_FROM_API.getDescription());
                 //return false;
 			}
 
@@ -342,11 +344,11 @@ public class MasheryClient {
 
 		} catch (ClientProtocolException e) {
 			log.error("Error modifying resource. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.CLIENT_PROTOCOL_EXCEPTION + " : " +e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.CLIENT_PROTOCOL_EXCEPTION.getDescription() + newLine +e.getMessage());
             //return false;
 		} catch (IOException e) {
 			log.error("Error modifying resource. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.IO_EXCEPTION + " : " +e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,"Error modifying resource. " + MasheryClientError.IO_EXCEPTION.getDescription() + newLine +e.getMessage());
             //return false;
 		} finally {
 			if (response != null)
@@ -360,13 +362,13 @@ public class MasheryClient {
 		if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
 			log.error("Invalid Token, please retry.");
 			OAuthTokenService.INSTANCE.clearToken();
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.TOKEN_UNAUTHORIZED.toString());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.TOKEN_UNAUTHORIZED.getDescription().toString());
 		}
 
 		if (statusCode != HttpStatus.SC_OK && response != null) {
 			log.error("Response error: " + response.getStatusLine().getStatusCode());
 			log.error(retrieveErrorFromResponse(response));
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.RESPONSE_ERROR_FROM_API+" - Response Status: " + response.getStatusLine().getStatusCode());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null,false,MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription()+ newLine + "Response Status: " + response.getStatusLine().getStatusCode());
             //return false;
 		}
 
@@ -400,32 +402,31 @@ public class MasheryClient {
 
 			oauthResponse = httpClient.execute(tokenPost);
 
-			if (oauthResponse == null || oauthResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-				if (oauthResponse != null) {
-					log.error("OAuth Token Response Status: " + oauthResponse.getStatusLine().getStatusCode());
-					log.error(retrieveErrorFromResponse(oauthResponse));
-                    String newLine = System.getProperty("line.separator");
-                    return new String[]{null, MasheryClientError.RESPONSE_ERROR_FROM_API + newLine +" Response Status: " + oauthResponse.getStatusLine().getStatusCode()+ " : " + oauthResponse.toString()};
+            if (oauthResponse == null || oauthResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                if (oauthResponse != null) {
+                    log.error("OAuth Token Response Status: " + oauthResponse.getStatusLine().getStatusCode());
+                    log.error(retrieveErrorFromResponse(oauthResponse));
+                    return new String[]{null, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ". Response Status: " + oauthResponse.getStatusLine().getStatusCode() + newLine + "Error Response : " + newLine + oauthResponse.toString()};
                 }
-				return new String[] {null,MasheryClientError.RESPONSE_ERROR_FROM_API.toString()};
-			}
-			HttpEntity body = oauthResponse.getEntity();
+                return new String[]{null, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription()};
+            }
+            HttpEntity body = oauthResponse.getEntity();
 			responseNode = mapper.readTree(body.getContent());
 		} catch (URISyntaxException e) {
 			log.error("Unable to fetch OAuth token " + e);
-            return new String[]{null, "Unable to fetch OAuth token " + MasheryClientError.URI_SYNTAX_EXCEPTION + " : " + e.getMessage()};
+            return new String[]{null, "Unable to fetch OAuth token " + MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + newLine + e.getMessage()};
             //return null;
 		} catch (JsonProcessingException e) {
 			log.error("Unable to fetch OAuth token " + e);
-            return new String[]{null, "Unable to fetch OAuth token " + MasheryClientError.JSON_PROCESSING_EXCEPTION + " : " + e.getMessage()};
+            return new String[]{null, "Unable to fetch OAuth token " + MasheryClientError.JSON_PROCESSING_EXCEPTION.getDescription() + newLine + e.getMessage()};
             //return null;
 		} catch (IllegalStateException e) {
 			log.error("Unable to fetch OAuth token " + e);
-            return new String[]{null, "Unable to fetch OAuth token " + MasheryClientError.ILLEGAL_STATE_EXCEPTION + " : " + e.getMessage()};
+            return new String[]{null, "Unable to fetch OAuth token " + MasheryClientError.ILLEGAL_STATE_EXCEPTION.getDescription() + newLine + e.getMessage()};
 			//return    null;
 		} catch (IOException e) {
 			log.error("Unable to fetch OAuth token " + e);
-            return new String[]{null, "Unable to fetch OAuth token " + MasheryClientError.IO_EXCEPTION + " : " + e.getMessage()};
+            return new String[]{null, "Unable to fetch OAuth token " + MasheryClientError.IO_EXCEPTION.getDescription() + newLine + e.getMessage()};
             //return null;
 		} finally {
 			// Reset credentials
@@ -462,19 +463,19 @@ public class MasheryClient {
 
 		// Validate Params are non empty
 		if (isEmpty(endpointName) || isEmpty(planName) || isEmpty(serviceName) || isEmpty(endpointName))
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY + "Add Endpoint To Plan");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Add Endpoint To Plan");
 			//return false;
 
 		if (readOnly) {
 			log.error("Attempted Modify operation. User has read only permissions");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM + "Add Endpoint To Plan");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM.getDescription() + "Add Endpoint To Plan");
             //return false;
 		}
 
 		String[] tokenResponse = retrieveOauthToken();
         if (tokenResponse[0] == null && tokenResponse[1] != null) {
 			log.error("Unable to retrieve OAuth token.");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED + "-" + tokenResponse[1]);
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED.getDescription() + newLine + tokenResponse[1]);
             //return false;
 		}
 		String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
@@ -499,12 +500,12 @@ public class MasheryClient {
 					if (!responseError.contains("already exists")) {
 						log.error("Error creating plan service " + planServicePath + ". Status code: " + response.getStatusLine().getStatusCode());
 						log.error("Error Response: " + responseError);
-                        return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API+ "Service already exists in the Plan" + ". Status code: " + response.getStatusLine().getStatusCode());
+                        return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription()+ "Service already exists in the Plan" + ". Status code: " + response.getStatusLine().getStatusCode() + newLine);
                         //return false;
 					}
 				} else {
 					log.error("Error creating plan service " + planServicePath);
-                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API+ "Create plan Service -" + planServicePath);
+                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription()+ "Create plan Service -" + planServicePath);
                     //return false;
 				}
 			}
@@ -528,24 +529,24 @@ public class MasheryClient {
 					String responseError = retrieveErrorFromResponse(response);
 					log.error("Error creating plan endpoint " + post.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
 					log.error("Error Response: " + responseError);
-                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API+ "Endpoint already exists in the Plan" + ". Status code: " + response.getStatusLine().getStatusCode());
-				} else {
+                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + "Endpoint already exists in the Plan" + ". Status code: " + response.getStatusLine().getStatusCode());
+                } else {
 					log.error("Error creating plan endpoint " + endpointId);
-                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API+ "Error creating plan endpoint -" + endpointId);
-				}
+                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription() + "Error creating plan endpoint -" + endpointId);
+                }
 				//return false;
 			}
 		} catch (ClientProtocolException e) {
 			log.error("Error adding endpoint to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.CLIENT_PROTOCOL_EXCEPTION+ ": "+e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.CLIENT_PROTOCOL_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return false;
 		} catch (IOException e) {
 			log.error("Error adding endpoint to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION+ ": "+e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return false;
 		} catch (URISyntaxException e) {
 			log.error("Error adding endpoint to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.URI_SYNTAX_EXCEPTION+ ": "+e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + newLine + e.getMessage());
             //return false;
 		} finally {
 			if (response != null)
@@ -561,12 +562,12 @@ public class MasheryClient {
 	public MasheryApiResponse addMethodToPlan(String methodName, String endpointName, String planName, String serviceName, String packageName) {
 		// Validate Params are non empty
 		if (isEmpty(methodName) || isEmpty(endpointName) || isEmpty(planName) || isEmpty(serviceName))
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY + "Add Method To Plan");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Add Method To Plan");
             //return false;
 
 		if (readOnly) {
 			log.error("Attempted Modify operation. User has read only permissions");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM + "Add Method To Plan");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM.getDescription() + "Add Method To Plan");
 			//return false;
 		}
 
@@ -598,7 +599,7 @@ public class MasheryClient {
 		String[] tokenResponse = retrieveOauthToken();
         if (tokenResponse[0] == null && tokenResponse[1] != null) {
 			log.error("Unable to retrieve OAuth token.");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED + "-" + tokenResponse[1]);
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED.getDescription() + newLine + tokenResponse[1]);
             //return false;
 		}
 
@@ -614,11 +615,11 @@ public class MasheryClient {
 			((ArrayNode) methodsNode).add(methodNode);
 		} catch (JsonProcessingException e) {
 			log.error("Error adding method to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.JSON_PROCESSING_EXCEPTION + "Error adding method to plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.JSON_PROCESSING_EXCEPTION.getDescription() + "Error adding method to plan. " + e.getMessage());
             //return false;
 		} catch (IOException e) {
 			log.error("Error adding method to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION + "Error adding method to plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION.getDescription() + "Error adding method to plan. " + e.getMessage());
             //return false;
 		}
 
@@ -632,15 +633,15 @@ public class MasheryClient {
 			put.setEntity(new StringEntity(putBody));
 		}  catch (URISyntaxException e) {
 			log.error("Error adding method to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.URI_SYNTAX_EXCEPTION + "Error adding method to plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + "Error adding method to plan. " + e.getMessage());
 			//return false;
 		} catch (UnsupportedEncodingException e) {
 			log.error("Error adding method to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.UNSUPPORTED_ENCODING_EXCEPTION + "Error adding method to plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.UNSUPPORTED_ENCODING_EXCEPTION.getDescription() + "Error adding method to plan. " + e.getMessage());
             //return false;
 		} catch (JsonProcessingException e) {
 			log.error("Error adding method to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.JSON_PROCESSING_EXCEPTION + "Error adding method to plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.JSON_PROCESSING_EXCEPTION.getDescription() + "Error adding method to plan. " + e.getMessage());
             //return false;
 		}
 
@@ -653,21 +654,21 @@ public class MasheryClient {
 					String responseError = retrieveErrorFromResponse(response);
 					log.error("Error creating plan method " + put.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
 					log.error("Error Response: " + responseError);
-                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API+ "Error creating plan method" + ". Status code: " + response.getStatusLine().getStatusCode());
-				} else {
+                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + "Error creating plan method" + ". Status code: " + response.getStatusLine().getStatusCode());
+                } else {
 					log.error("Error creating plan method " + endpointId);
-                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API+ "Error creating plan method -" + endpointId);
-				}
+                    return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription() + "Error creating plan method -" + endpointId);
+                }
 				//return false;
 			}
 
 		} catch (ClientProtocolException e) {
 			log.error("Error adding method to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.CLIENT_PROTOCOL_EXCEPTION + "Error adding method to plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.CLIENT_PROTOCOL_EXCEPTION.getDescription() + "Error adding method to plan. " + e.getMessage());
             //return false;
 		} catch (IOException e) {
 			log.error("Error adding method to plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION + "Error adding method to plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION.getDescription() + "Error adding method to plan. " + e.getMessage());
         } finally {
 			if (response != null)
 				try {
@@ -683,12 +684,12 @@ public class MasheryClient {
 	public MasheryApiResponse addMethodToPlan(MasheryMethod method, String planName, String serviceName, String packageName, String endpointName) {
 		// Validate Params are non empty
 		if (isEmpty(method.getName()) || isEmpty(planName) || isEmpty(serviceName) || isEmpty(endpointName))
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY + "Add method To Plan");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Add method To Plan");
             //return false;
 
 		if (readOnly) {
 			log.error("Attempted Modify operation. User has read only permissions");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM + "Add method To Plan");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM.getDescription() + "Add method To Plan");
             //return false;
 		}
 
@@ -761,7 +762,7 @@ public class MasheryClient {
 
 		if (readOnly) {
 			log.error("Attempted Modify operation. User has read only permissions");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM + "Remove Endpoint From Plan");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM.getDescription() + "Remove Endpoint From Plan");
             //return false;
 		}
 
@@ -775,7 +776,7 @@ public class MasheryClient {
 		String[] tokenResponse = retrieveOauthToken();
         if (tokenResponse[0] == null && tokenResponse[1] != null) {
 			log.error("Unable to retrieve OAuth token.");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED + "-" + tokenResponse[1]);
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED.getDescription() + newLine + tokenResponse[1]);
             //return false;
 		}
 
@@ -788,20 +789,20 @@ public class MasheryClient {
 			response = httpClient.execute(delete);
 
 			if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
-                return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API+ "Remove Endpoint From Plan");
+                return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription() + "Remove Endpoint From Plan");
                 //return false;
 
 		} catch (ClientProtocolException e) {
 			log.error("Error removing endpoint from plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.CLIENT_PROTOCOL_EXCEPTION + "Error removing endpoint from plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.CLIENT_PROTOCOL_EXCEPTION.getDescription() + "Error removing endpoint from plan. " + e.getMessage());
             //return false;
 		} catch (IOException e) {
 			log.error("Error removing endpoint from plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION + "Error removing endpoint from plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION.getDescription() + "Error removing endpoint from plan. " + e.getMessage());
             //return false;
         } catch (URISyntaxException e) {
 			log.error("Error removing endpoint from plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.URI_SYNTAX_EXCEPTION + "Error removing endpoint from plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + "Error removing endpoint from plan. " + e.getMessage());
             //return false;
         } finally {
 			if (response != null)
@@ -818,7 +819,7 @@ public class MasheryClient {
 
 		if (readOnly) {
 			log.error("Attempted Modify operation. User has read only permissions");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM + "Remove Method from Plan");
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.READ_ONLY_USER_CANNOT_PERFORM.getDescription() + "Remove Method from Plan");
             //return false;
 		}
 
@@ -833,7 +834,7 @@ public class MasheryClient {
         String[] tokenResponse = retrieveOauthToken();
         if (tokenResponse[0] == null && tokenResponse[1] != null) {
             log.error("Unable to retrieve OAuth token.");
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED + "-" + tokenResponse[1]);
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_OAUTH_RETRIEVED.getDescription() + newLine + tokenResponse[1]);
             //return false;
         }
 
@@ -845,20 +846,20 @@ public class MasheryClient {
 			response = httpClient.execute(delete);
 
 			if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
-                return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API+ "Remove Method from Plan");
+                return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription()+ "Remove Method from Plan");
                 //return false;
 
 		} catch (ClientProtocolException e) {
 			log.error("Error removing method from plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.CLIENT_PROTOCOL_EXCEPTION + "Error removing method from plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.CLIENT_PROTOCOL_EXCEPTION.getDescription() + "Error removing method from plan. " + e.getMessage());
             //return false;
 		} catch (IOException e) {
 			log.error("Error removing method from plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION + "Error removing method from plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.IO_EXCEPTION.getDescription() + "Error removing method from plan. " + e.getMessage());
             //return false;
         } catch (URISyntaxException e) {
 			log.error("Error removing method from plan. " + e);
-            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.URI_SYNTAX_EXCEPTION + "Error removing method from plan. " + e.getMessage());
+            return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + "Error removing method from plan. " + e.getMessage());
             //return false;
 		} finally {
 			if (response != null)

@@ -1,7 +1,9 @@
 package com.afkl.generic.mashery;
 
 /**
- * Created by x085982 on 3/8/2016.
+ * Created by x085982 on 3/7/2016.
+ * Domain class for API Response from Mashery Client
+ * Useful to pass the information to the consumers with some basic error description
  */
 public class MasheryApiResponse {
 
