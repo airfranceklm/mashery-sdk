@@ -52,10 +52,6 @@ public class MasheryClientTest extends TestCase {
 
 	private LocalTestServer testServer;
 
-	private HttpRequestHandler resourceHandler;
-
-	private HttpRequestHandler tokenHandler;
-
 	private MasheryResource resource;
 	private int port;
 	private String host;
@@ -81,8 +77,8 @@ public class MasheryClientTest extends TestCase {
 	public void setUp() throws Exception {
 		OAuthTokenService.INSTANCE.clearToken();
 
-		tokenHandler = new TokenHandler();
-		resourceHandler = new ResourceHandler();
+		HttpRequestHandler tokenHandler = new TokenHandler();
+		HttpRequestHandler resourceHandler = new ResourceHandler();
 
 		testServer = new LocalTestServer(null, null);
 		testServer.register("/v3/rest/*", resourceHandler);
@@ -123,29 +119,29 @@ public class MasheryClientTest extends TestCase {
 
 	@Test
 	public void testDeleteResource() {
-		assertTrue(client.deleteResource(RESOUCE_PATH));
+		assertTrue(client.deleteResource(RESOUCE_PATH).isStatus());
 	}
 
 	@Test
 	public void testCreateResource() {
 		resource = new MasheryService();
-		assertEquals(resourceId, client.createResource(resource));
+		assertEquals(resourceId, client.createResource(resource).getResponse());
 	}
 
 	@Test
 	public void testModifyResource() {
 		resource =  new MasheryPackage();
-		assertTrue(client.modifyResource(resource));
+		assertTrue(client.modifyResource(resource).isStatus());
 	}
 
 	@Test
 	public void testAddEndpointToPlan() {
-		assertTrue(client.addEndpointToPlan(endpointName, planName, serviceName , packageName));
+		assertTrue(client.addEndpointToPlan(endpointName, planName, serviceName , packageName).isStatus());
 	}
 
 	@Test
 	public void testRemoveEndpointFromPlan() {
-		assertTrue(client.removeEndpointFromPlan(endpointName, planName, serviceName, packageName));
+		assertTrue(client.removeEndpointFromPlan(endpointName, planName, serviceName, packageName).isStatus());
 	}
 
 
@@ -165,14 +161,14 @@ public class MasheryClientTest extends TestCase {
 				.build();
 
 		resource = new MasheryPackage();
-		assertNull(client.createResource(resource));
+		assertNull(client.createResource(resource).getResponse());
 	}
 
 	@Test
 	public void testErrorResponseFromMashery() {
 		testServer.register("/v3/rest/services", new ErrorRequestHandler());
 		resource = new MasheryService();
-		assertNull(client.createResource(resource));
+		assertNull(client.createResource(resource).getResponse());
 	}
 
 	@Test
@@ -183,7 +179,7 @@ public class MasheryClientTest extends TestCase {
 
 		testServer.register("/v3/token", new ErrorTokenRequestHandler());
 		resource = new MasheryEndpoint();
-		assertFalse(client.modifyResource(resource));
+		assertFalse(client.modifyResource(resource).isStatus());
 	}
 
 	@Test
@@ -193,21 +189,21 @@ public class MasheryClientTest extends TestCase {
 
 	@Test
 	public void testNullResources() {
-		assertNull(client.createResource(null));
-		assertFalse(client.modifyResource(null));
-		assertFalse(client.deleteResource("    "));
+		assertNull(client.createResource(null).getResponse());
+		assertFalse(client.modifyResource(null).isStatus());
+		assertFalse(client.deleteResource("    ").isStatus());
 		assertNull(client.fetchResource("  ", null));
 	}
 
 	@Test
 	public void testAddEndpointToPlanFail() {
 		testServer.register("/v3/rest/packages/*", new ErrorRequestHandler());
-		assertFalse(client.addEndpointToPlan(endpointName, planName, serviceName , packageName));
+		assertFalse(client.addEndpointToPlan(endpointName, planName, serviceName , packageName).isStatus());
 	}
 
 	@Test
 	public void testAddMethodToPlan() {
-		assertTrue(client.addMethodToPlan(methodName, endpointName, planName, serviceName, packageName));
+		assertTrue(client.addMethodToPlan(methodName, endpointName, planName, serviceName, packageName).isStatus());
 	}
 
 	@Test
@@ -215,18 +211,18 @@ public class MasheryClientTest extends TestCase {
 		MasheryMethod method = new MasheryMethod();
 		method.setEndpointId("testEndpointID");
 		method.setName("testMethodName");
-		assertTrue(client.addMethodToPlan(method, planName, serviceName, packageName, endpointName));
+		assertTrue(client.addMethodToPlan(method, planName, serviceName, packageName, endpointName).isStatus());
 	}
 
 	@Test
 	public void testAddMethodToPlanFail() {
 		testServer.register("/v3/rest/packages/*", new ErrorRequestHandler());
-		assertFalse(client.addMethodToPlan(methodName, endpointName, planName, serviceName, packageName));
+		assertFalse(client.addMethodToPlan(methodName, endpointName, planName, serviceName, packageName).isStatus());
 	}
 
 	@Test
 	public void testRemoveMethodToPlan() {
-		assertTrue(client.removeMethodFromPlan(methodName, endpointName, planName, serviceName, packageName));
+		assertTrue(client.removeMethodFromPlan(methodName, endpointName, planName, serviceName, packageName).isStatus());
 	}
 
 
@@ -234,24 +230,24 @@ public class MasheryClientTest extends TestCase {
 	public void testModifyResourceFail() {
 		testServer.register("/v3/rest/services/*", new ErrorRequestHandler());
 		resource =  new MasheryEndpoint();
-		assertFalse(client.modifyResource(resource));
+		assertFalse(client.modifyResource(resource).isStatus());
 	}
 
 	@Test
 	public void testReadOnly() {
 		client.setReadOnly(true);
-		assertNull(client.createResource(new MasheryPlan()));
-		assertFalse(client.modifyResource((new MasheryPlan())));
-		assertFalse(client.deleteResource("/v3/rest/services/1234"));
-		assertFalse(client.removeEndpointFromPlan(endpointName, planName, serviceName, packageName));
-		assertFalse(client.addEndpointToPlan(endpointName, planName, serviceName, packageName));
+		assertNull(client.createResource(new MasheryPlan()).getResponse());
+		assertFalse(client.modifyResource((new MasheryPlan())).isStatus());
+		assertFalse(client.deleteResource("/v3/rest/services/1234").isStatus());
+		assertFalse(client.removeEndpointFromPlan(endpointName, planName, serviceName, packageName).isStatus());
+		assertFalse(client.addEndpointToPlan(endpointName, planName, serviceName, packageName).isStatus());
 		assertNotNull(client.fetchResource("/v3/rest/services", null));
 	}
 
 	@Test
 	public void testDeleteResourceErrors() {
 		// No Path
-		assertFalse(client.deleteResource(null));
+		assertFalse(client.deleteResource(null).isStatus());
 //		 Expired token
 //		client.deleteResource(RESOUCE_PATH);
 //		try {
@@ -273,13 +269,13 @@ public class MasheryClientTest extends TestCase {
 	@Test
 	public void testBadToken() {
 		testServer.register("/v3/token", new BadTokenRequestHandler());
-		assertFalse(client.deleteResource(RESOUCE_PATH));
+		assertFalse(client.deleteResource(RESOUCE_PATH).isStatus());
 	}
 
 	@Test
 	public void testAddEndpointToPlanError() {
 		testServer.register("/v3/rest/packages/testResourceId/plans/testResourceId/services/testResourceId/endpoints", new ErrorRequestHandler());
-		assertFalse(client.addEndpointToPlan(endpointName, planName, serviceName, packageName));
+		assertFalse(client.addEndpointToPlan(endpointName, planName, serviceName, packageName).isStatus());
 	}
 
 	/**
