@@ -69,6 +69,9 @@ public class MasheryClient {
 
 	private String apiSecret;
 
+	//AreaUuid
+	private String apiScope;
+
 	// If set the client will not send any modification requests through
 	private boolean readOnly;
 
@@ -96,6 +99,8 @@ public class MasheryClient {
 		oauthParamList = new ArrayList<NameValuePair>();
 		for (String key : builder.tokenRequestParameters.keySet()) {
 			oauthParamList.add(new BasicNameValuePair(key, builder.tokenRequestParameters.get(key)));
+            if (MasheryUtils.isEqual(key, "scope"))
+                this.apiScope = builder.tokenRequestParameters.get(key);
 		}
 
 		// Configure ObjectMapper
@@ -383,12 +388,12 @@ public class MasheryClient {
 	 */
 	private String[] retrieveOauthToken() {
 
-		String token = OAuthTokenService.INSTANCE.retrieveToken();
+		String token = OAuthTokenService.INSTANCE.retrieveToken(apiScope);
 		if (token != null)
-            //return token;
+            //return token with no error message example : {12356,null};
 			return new String[] {token,null};
-
-		JsonNode responseNode = null;
+        log.info("Either existing cached token expired OR belongs to different Area ID. So trying to retrieve new access token for given Area ID..");
+        JsonNode responseNode = null;
 		HttpResponse oauthResponse = null;
 		try {
 			HttpPost tokenPost = new HttpPost(uriBuilder.setPath(TOKEN_PATH).build());
@@ -442,8 +447,9 @@ public class MasheryClient {
 
 		String accessToken = responseNode.get("access_token").asText();
 		int ttl = responseNode.get("expires_in").asInt();
+		String scope = responseNode.get("scope").asText();
 
-		OAuthTokenService.INSTANCE.putToken(accessToken, ttl);
+		OAuthTokenService.INSTANCE.putToken(accessToken, ttl, scope);
 
 		//return accessToken;
         return new String[] {accessToken,null};
