@@ -27,32 +27,47 @@ public class OAuthTokenServiceTest extends TestCase {
 
 	@Test
 	public void testRetrieveToken() throws Exception {
-		String token = OAuthTokenService.INSTANCE.retrieveToken();
+		String token = OAuthTokenService.INSTANCE.retrieveToken("1111111-2222-333333-4444");
 		assertNull(token);
 	}
 
 	@Test
 	public void testPutAndRetrieve() throws Exception {
 		String testToken = UUID.randomUUID().toString();
-		OAuthTokenService.INSTANCE.putToken(testToken, 15);
-		assertEquals(testToken, OAuthTokenService.INSTANCE.retrieveToken());
+		OAuthTokenService.INSTANCE.putToken(testToken, 15,"1111111-2222-333333-4444");
+		assertEquals(testToken, OAuthTokenService.INSTANCE.retrieveToken("1111111-2222-333333-4444"));
 	}
 
 	@Test
 	public void testPutWithShortTtl() throws Exception {
 		String testToken = UUID.randomUUID().toString();
-		OAuthTokenService.INSTANCE.putToken(testToken, 9);
+		OAuthTokenService.INSTANCE.putToken(testToken, 9,"1111111-2222-333333-4444");
 		// Need to account for buffer time of 10 seconds
 		// Thread.sleep(2000);
-		String token = OAuthTokenService.INSTANCE.retrieveToken();
+		String token = OAuthTokenService.INSTANCE.retrieveToken("1111111-2222-333333-4444");
 		assertFalse(testToken == token);
 	}
 
 	@Test
 	public void testClearToken() throws Exception {
 		String testToken = UUID.randomUUID().toString();
-		OAuthTokenService.INSTANCE.putToken(testToken, 15);
+		OAuthTokenService.INSTANCE.putToken(testToken, 15,"1111111-2222-333333-4444");
 		OAuthTokenService.INSTANCE.clearToken();
-		assertFalse(testToken == OAuthTokenService.INSTANCE.retrieveToken());
+		assertFalse(testToken == OAuthTokenService.INSTANCE.retrieveToken("1111111-2222-333333-4444"));
+	}
+
+
+	@Test
+	public void testTokenwithSameAreaID() throws Exception {
+		String testToken = UUID.randomUUID().toString();
+		OAuthTokenService.INSTANCE.putToken(testToken, 100,"1111111-2222-333333-4444");
+		assertEquals(null, OAuthTokenService.INSTANCE.retrieveToken(null));
+	}
+
+	@Test
+	public void testTokenwithDifferentAreaID() throws Exception {
+		String testToken = UUID.randomUUID().toString();
+		OAuthTokenService.INSTANCE.putToken(testToken, 15,"1111111-2222-333333-4444");
+		assertFalse(testToken == OAuthTokenService.INSTANCE.retrieveToken("88888-2222-333333-4444"));
 	}
 }
