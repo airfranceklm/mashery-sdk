@@ -16,6 +16,12 @@ public class MasheryMethod implements MasheryResource {
 
 	private String sampleXmlResponse;
 
+	private int rateLimitCeiling;
+
+	private String rateLimitPeriod;
+
+	private int qpsLimitCeiling;
+
 	@JsonIgnore
 	private String serviceId;
 
@@ -40,6 +46,30 @@ public class MasheryMethod implements MasheryResource {
 
 	public String getSampleJsonResponse() {
 		return sampleJsonResponse;
+	}
+
+	public int getRateLimitCeiling() {
+		return rateLimitCeiling;
+	}
+
+	public void setRateLimitCeiling(int rateLimitCeiling) {
+		this.rateLimitCeiling = rateLimitCeiling;
+	}
+
+	public String getRateLimitPeriod() {
+		return rateLimitPeriod;
+	}
+
+	public void setRateLimitPeriod(String rateLimitPeriod) {
+		this.rateLimitPeriod = rateLimitPeriod;
+	}
+
+	public int getQpsLimitCeiling() {
+		return qpsLimitCeiling;
+	}
+
+	public void setQpsLimitCeiling(int qpsLimitCeiling) {
+		this.qpsLimitCeiling = qpsLimitCeiling;
 	}
 
 	public void setSampleJsonResponse(String sampleJsonResponse) {
