@@ -6,7 +6,6 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
@@ -174,7 +173,7 @@ public class MasheryClient {
             }
             else if (statusCode != HttpStatus.SC_OK) {
                 log.error("Response error: " + response.getStatusLine().getStatusCode());
-                String errorInformationInResponse = retrieveErrorFromResponse(response);
+                String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                 log.error(errorInformationInResponse);
                 Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
@@ -269,7 +268,7 @@ public class MasheryClient {
             }
             else if (statusCode != HttpStatus.SC_OK) {
                 log.error("Response error: " + response.getStatusLine().getStatusCode());
-                String errorInformationInResponse = retrieveErrorFromResponse(response);
+                String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                 log.error(errorInformationInResponse);
                 Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
@@ -369,7 +368,7 @@ public class MasheryClient {
 
             if (statusCode != HttpStatus.SC_OK && response != null) {
                 log.error("Response error: " + response.getStatusLine().getStatusCode());
-                String errorInformationInResponse = retrieveErrorFromResponse(response);
+                String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                 log.error(errorInformationInResponse);
                 Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
@@ -426,7 +425,7 @@ public class MasheryClient {
             if (oauthResponse == null || oauthResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 if (oauthResponse != null) {
                     log.error("OAuth Token Response Status: " + oauthResponse.getStatusLine().getStatusCode());
-                    log.error(retrieveErrorFromResponse(oauthResponse));
+                    log.error(MasheryUtils.retrieveErrorFromResponse(oauthResponse));
                     return new String[] { null, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ". Response Status: " + oauthResponse.getStatusLine().getStatusCode() + newLine + "Error Response : "
                                     + newLine + oauthResponse.toString() };
                 }
@@ -523,11 +522,11 @@ public class MasheryClient {
 
             if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 if (response != null) {
-                    String responseError = retrieveErrorFromResponse(response);
+                    String responseError = MasheryUtils.retrieveErrorFromResponse(response);
                     // Check if Error message is 'Service already exists in the Plan'
                     if (!responseError.contains("already exists")) {
                         log.error("Response error: " + response.getStatusLine().getStatusCode());
-                        String errorInformationInResponse = retrieveErrorFromResponse(response);
+                        String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                         log.error(errorInformationInResponse);
                         Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                         return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
@@ -558,7 +557,7 @@ public class MasheryClient {
             if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 if (response != null) {
                     log.error("Error creating plan endpoint " + post.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
-                    String errorInformationInResponse = retrieveErrorFromResponse(response);
+                    String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                     log.error(errorInformationInResponse);
                     Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false,
@@ -692,7 +691,7 @@ public class MasheryClient {
 
             if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 if (response != null) {
-                    String responseError = retrieveErrorFromResponse(response);
+                    String responseError = MasheryUtils.retrieveErrorFromResponse(response);
                     log.error("Error creating plan method " + put.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
                     log.error("Error Response: " + responseError);
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false,
@@ -759,57 +758,6 @@ public class MasheryClient {
         ObjectNode methodNode = mapper.valueToTree(method);
 
         return addMethodNode(methodNode, resource, planMethodPath, endpointId);
-    }
-
-    /**
-     * Convert the JSON error response to a string
-     * 
-     * @param response containing json error
-     * @return string representation of the error.
-     */
-    private static String retrieveErrorFromResponse(HttpResponse response) {
-        Scanner scan = null;
-        try {
-            scan = new Scanner(response.getEntity().getContent()).useDelimiter("\\A");
-            return scan.hasNext() ? scan.next() : "";
-        }
-        catch (IllegalStateException e) {
-            // Ignore
-        }
-        catch (IOException e) {
-            // Ignore
-        }
-        finally {
-            if (scan != null)
-                scan.close();
-        }
-
-        return null;
-    }
-
-    // TODO Remove this if not used.
-    private String retrieveErrorAsJson(HttpResponse response) {
-        StringBuilder buf = new StringBuilder();
-        try {
-            JsonNode responseNode = mapper.readTree(response.getEntity().getContent());
-            buf.append("Error Code: ").append(responseNode.get("errorCode").asInt());
-            buf.append(". Error Message: ").append(responseNode.get("errorMessage"));
-            JsonNode errorsNode = responseNode.get("errors");
-            if (errorsNode != null && errorsNode.isArray()) {
-                buf.append("Error: ");
-                buf.append(responseNode.toString());
-            }
-        }
-        catch (JsonProcessingException e) {
-            log.error("Error retrieving error. Error-ception!");
-        }
-        catch (IllegalStateException e) {
-            log.error("Error retrieving error. Error-ception!");
-        }
-        catch (IOException e) {
-            log.error("Error retrieving error. Error-ception!");
-        }
-        return buf.toString();
     }
 
     public MasheryApiResponse removeEndpointFromPlan(String endpointName, String planName, String serviceName, String packageName) {

@@ -24,14 +24,14 @@ public enum MasheryClientError {
 
 
     private final int code;
-    private final java.lang.String description;
+    private final String description;
 
-    private MasheryClientError(int code, java.lang.String description) {
+    private MasheryClientError(int code, String description) {
         this.code = code;
         this.description = description;
     }
 
-    public java.lang.String getDescription() {
+    public String getDescription() {
         return description;
     }
 
