@@ -3,7 +3,10 @@ package com.afkl.generic.mashery;
 import java.io.IOException;
 import java.util.Scanner;
 
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.message.BasicHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,11 +60,14 @@ public class MasheryUtils {
     }
 
     public static String retrieveCompleteErrorResponseAsJson(String errorInformationInResponse, ObjectMapper mapper) {
-        StringBuilder buf = new StringBuilder();
+
         try {
-            Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errorJson);
+            if (!errorInformationInResponse.isEmpty() && errorInformationInResponse.charAt(0) != '<') {
+                Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
+                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errorJson);
+            }
         }
+
         catch (JsonProcessingException e) {
             log.error("Error retrieving error at method:  retrieveCompleteErrorResponseAsJson" + e.getMessage());
         }
@@ -71,6 +77,26 @@ public class MasheryUtils {
         catch (IOException e) {
             log.error("Error retrieving error at method retrieveCompleteErrorResponseAsJson" + e.getMessage());
         }
-        return buf.toString();
+        return errorInformationInResponse;
+    }
+
+    /**
+     * Util method to create a Auth header with Bearer token
+     * 
+     * @param token - token to be included
+     * @return Header object for Bearer Auth
+     */
+    public static Header createAuthHeader(String token) {
+        return new BasicHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+    }
+
+    /**
+     * Utility method to check for empty string
+     * 
+     * @param toCheck string to check
+     * @return true if string is null, has length 0 or contains only whitespace
+     */
+    public static boolean isEmpty(String toCheck) {
+        return toCheck == null || toCheck.trim().length() == 0;
     }
 }

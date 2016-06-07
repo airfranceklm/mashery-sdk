@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -24,7 +23,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -129,7 +127,7 @@ public class MasheryClient {
      */
     public MasheryApiResponse deleteResource(String path) {
 
-        if (isEmpty(path)) {
+        if (MasheryUtils.isEmpty(path)) {
             log.error("Cannot delete resource, path is empty");
             return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Delete Resource.");
         }
@@ -152,7 +150,7 @@ public class MasheryClient {
             log.error("Cannot delete Resource, incorrect URI.");
             return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, "Cannot delete Resource. " + MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + newLine + e.getMessage());
         }
-        delete.addHeader(createAuthHeader(tokenResponse[0]));
+        delete.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
         log.info("Deleting Resource. " + path);
 
         HttpResponse response = null;
@@ -177,7 +175,7 @@ public class MasheryClient {
                 log.error(errorInformationInResponse);
                 Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
-                                + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errorJson) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
+                                + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
             }
 
         }
@@ -233,7 +231,7 @@ public class MasheryClient {
             log.info("Request BODY: " + deployableAsString);
             post.setEntity(new StringEntity(deployableAsString));
             post.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-            post.addHeader(createAuthHeader(tokenResponse[0]));
+            post.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
         }
         catch (URISyntaxException e) {
             log.error("Error creating resource: " + e);
@@ -270,9 +268,8 @@ public class MasheryClient {
                 log.error("Response error: " + response.getStatusLine().getStatusCode());
                 String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                 log.error(errorInformationInResponse);
-                Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
-                                + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errorJson) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
+                                + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
             }
 
             if (response.getEntity() != null) {
@@ -334,7 +331,7 @@ public class MasheryClient {
             log.info("Sending PUT request to:" + put.getURI().toString() + " Payload: " + deployableAsString);
             put.setEntity(new StringEntity(deployableAsString));
             put.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-            put.addHeader(createAuthHeader(tokenResponse[0]));
+            put.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
         }
         catch (URISyntaxException e) {
             log.error("Error modifying resource. " + e);
@@ -372,7 +369,7 @@ public class MasheryClient {
                 log.error(errorInformationInResponse);
                 Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
-                                + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errorJson) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
+                                + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
             }
 
         }
@@ -489,7 +486,7 @@ public class MasheryClient {
     public MasheryApiResponse addEndpointToPlan(String endpointName, String planName, String serviceName, String packageName) {
 
         // Validate Params are non empty
-        if (isEmpty(endpointName) || isEmpty(planName) || isEmpty(serviceName) || isEmpty(endpointName))
+        if (MasheryUtils.isEmpty(endpointName) || MasheryUtils.isEmpty(planName) || MasheryUtils.isEmpty(serviceName) || MasheryUtils.isEmpty(endpointName))
             return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Add Endpoint To Plan");
         // return false;
 
@@ -515,22 +512,20 @@ public class MasheryClient {
         uriBuilder.removeQuery();
         try {
             HttpPost post = new HttpPost(uriBuilder.setPath(planServicePath).build());
-            post.addHeader(createAuthHeader(tokenResponse[0]));
+            post.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
             post.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
             post.setEntity(new StringEntity(String.format(GENERIC_JSON_RESOURCE, serviceId)));
             response = httpClient.execute(post);
 
             if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 if (response != null) {
-                    String responseError = MasheryUtils.retrieveErrorFromResponse(response);
+                    String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                     // Check if Error message is 'Service already exists in the Plan'
-                    if (!responseError.contains("already exists")) {
+                    if (!errorInformationInResponse.contains("already exists")) {
                         log.error("Response error: " + response.getStatusLine().getStatusCode());
-                        String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                         log.error(errorInformationInResponse);
-                        Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                         return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
-                                        + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errorJson) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
+                                        + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
                     }
                 }
                 else {
@@ -548,7 +543,7 @@ public class MasheryClient {
 
             uriBuilder.removeQuery();
             post = new HttpPost(uriBuilder.setPath(planServicePath + "/" + serviceId + "/endpoints").build());
-            post.addHeader(createAuthHeader(tokenResponse[0]));
+            post.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
             post.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
             post.setEntity(new StringEntity(String.format(GENERIC_JSON_RESOURCE, endpointId)));
             response = httpClient.execute(post);
@@ -561,7 +556,7 @@ public class MasheryClient {
                     log.error(errorInformationInResponse);
                     Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false,
-                                    MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errorJson) + newLine
+                                    MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine
                                                     + "Error creating plan endpoint -" + post.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
                 }
                 else {
@@ -596,7 +591,7 @@ public class MasheryClient {
 
     public MasheryApiResponse addMethodToPlan(String methodName, String endpointName, String planName, String serviceName, String packageName) {
         // Validate Params are non empty
-        if (isEmpty(methodName) || isEmpty(endpointName) || isEmpty(planName) || isEmpty(serviceName))
+        if (MasheryUtils.isEmpty(methodName) || MasheryUtils.isEmpty(endpointName) || MasheryUtils.isEmpty(planName) || MasheryUtils.isEmpty(serviceName))
             return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Add Method To Plan");
         // return false;
 
@@ -664,7 +659,7 @@ public class MasheryClient {
         HttpPut put = null;
         try {
             put = new HttpPut(uriBuilder.setPath(planMethodPath).build());
-            put.addHeader(createAuthHeader(tokenResponse[0]));
+            put.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
             put.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
             String putBody = mapper.writeValueAsString(responseNode);
             put.setEntity(new StringEntity(putBody));
@@ -729,7 +724,7 @@ public class MasheryClient {
 
     public MasheryApiResponse addMethodToPlan(MasheryMethod method, String planName, String serviceName, String packageName, String endpointName) {
         // Validate Params are non empty
-        if (isEmpty(method.getName()) || isEmpty(planName) || isEmpty(serviceName) || isEmpty(endpointName))
+        if (MasheryUtils.isEmpty(method.getName()) || MasheryUtils.isEmpty(planName) || MasheryUtils.isEmpty(serviceName) || MasheryUtils.isEmpty(endpointName))
             return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESOURCE_PATH_EMPTY.getDescription() + "Add method To Plan");
         // return false;
 
@@ -787,7 +782,7 @@ public class MasheryClient {
             // We will never need to remove the plan service.
             uriBuilder.removeQuery();
             HttpDelete delete = new HttpDelete(uriBuilder.setPath(planServicePath + "/" + serviceId + "/endpoints/" + endpointId).build());
-            delete.addHeader(createAuthHeader(tokenResponse[0]));
+            delete.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
             response = httpClient.execute(delete);
 
             if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
@@ -849,7 +844,7 @@ public class MasheryClient {
         try {
             uriBuilder.removeQuery();
             HttpDelete delete = new HttpDelete(uriBuilder.setPath(planMethodPath + "/methods/" + methodId).build());
-            delete.addHeader(createAuthHeader(tokenResponse[0]));
+            delete.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
             response = httpClient.execute(delete);
 
             if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
@@ -893,7 +888,7 @@ public class MasheryClient {
         JsonNode responseNode = null;
         try {
             String resource = fetchResource(path, FILTER_QUERY + URLEncoder.encode(resourceName, "UTF-8"));
-            if (isEmpty(resource))
+            if (MasheryUtils.isEmpty(resource))
                 return null;
 
             responseNode = mapper.readTree(resource);
@@ -923,7 +918,7 @@ public class MasheryClient {
      */
     public String fetchResource(String path, String query) {
 
-        if (isEmpty(path)) {
+        if (MasheryUtils.isEmpty(path)) {
             log.error("Cannot fetch resource, Path is null");
             return null;
         }
@@ -935,18 +930,26 @@ public class MasheryClient {
 
         HttpResponse response = null;
         uriBuilder.setPath(path);
-        if (!isEmpty(query))
+        if (!MasheryUtils.isEmpty(query))
             uriBuilder.setQuery(query);
         else
             uriBuilder.removeQuery();
 
         try {
             HttpGet get = new HttpGet(uriBuilder.build());
-            get.addHeader(createAuthHeader(tokenResponse[0]));
+            get.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
             response = httpClient.execute(get);
-
             if (response == null || response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                log.error("Error retrieving resource :" + get.getURI().toString());
+                if (response != null) {
+                    log.error("Response error: " + response.getStatusLine().getStatusCode());
+                    String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
+                    log.error(errorInformationInResponse);
+                    String errorJson = MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper);
+                    log.error("Error : >> " + errorJson);
+                }
+                else{
+                    log.error(MasheryClientError.NO_RESPONSE_FROM_API.getDescription());
+                }
             }
             else if (response.getEntity() != null) {
                 return IOUtils.toString(response.getEntity().getContent());
@@ -1008,23 +1011,4 @@ public class MasheryClient {
         return id;
     }
 
-    /**
-     * Util method to create a Auth header with Bearer token
-     * 
-     * @param token - token to be included
-     * @return Header object for Bearer Auth
-     */
-    private static Header createAuthHeader(String token) {
-        return new BasicHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token);
-    }
-
-    /**
-     * Utility method to check for empty string
-     * 
-     * @param toCheck string to check
-     * @return true if string is null, has length 0 or contains only whitespace
-     */
-    private static boolean isEmpty(String toCheck) {
-        return toCheck == null || toCheck.trim().length() == 0;
-    }
 }
