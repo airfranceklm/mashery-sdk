@@ -62,7 +62,7 @@ public class MasheryUtils {
     public static String retrieveCompleteErrorResponseAsJson(String errorInformationInResponse, ObjectMapper mapper) {
 
         try {
-            if (!errorInformationInResponse.isEmpty() && errorInformationInResponse.charAt(0) != '<') {
+            if (!MasheryUtils.isEmpty(errorInformationInResponse) && errorInformationInResponse.charAt(0) != '<') {
                 Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                 return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errorJson);
             }
