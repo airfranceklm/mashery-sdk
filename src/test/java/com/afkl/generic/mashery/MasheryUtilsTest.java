@@ -66,7 +66,6 @@ public class MasheryUtilsTest {
         assertEquals(MasheryUtils.retrieveCompleteErrorResponseAsJson(errorString, mapper), errorString);
         assertNull(MasheryUtils.retrieveCompleteErrorResponseAsJson(null, mapper));
         assertEquals(MasheryUtils.retrieveCompleteErrorResponseAsJson(errorResponse, mapper), errorResponse);
-        System.out.println(MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper));
     }
 
 }

@@ -69,13 +69,13 @@ public class MasheryUtils {
         }
 
         catch (JsonProcessingException e) {
-            log.error("Error retrieving error at method:  retrieveCompleteErrorResponseAsJson" + e.getMessage());
+            log.error("Error retrieving error at method:  retrieveCompleteErrorResponseAsJson :" + e.getMessage());
         }
         catch (IllegalStateException e) {
-            log.error("Error retrieving error at method retrieveCompleteErrorResponseAsJson" + e.getMessage());
+            log.error("Error retrieving error at method retrieveCompleteErrorResponseAsJson :" + e.getMessage());
         }
         catch (IOException e) {
-            log.error("Error retrieving error at method retrieveCompleteErrorResponseAsJson" + e.getMessage());
+            log.error("Error retrieving error at method retrieveCompleteErrorResponseAsJson :" + e.getMessage());
         }
         return errorInformationInResponse;
     }
