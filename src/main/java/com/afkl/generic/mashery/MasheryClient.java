@@ -173,7 +173,6 @@ public class MasheryClient {
                 log.error("Response error: " + response.getStatusLine().getStatusCode());
                 String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                 log.error(errorInformationInResponse);
-                Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
                                 + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
             }
@@ -553,7 +552,6 @@ public class MasheryClient {
                     log.error("Error creating plan endpoint " + post.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
                     String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                     log.error(errorInformationInResponse);
-                    Object errorJson = mapper.readValue(errorInformationInResponse, Object.class);
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false,
                                     MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine
                                                     + "Error creating plan endpoint -" + post.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
