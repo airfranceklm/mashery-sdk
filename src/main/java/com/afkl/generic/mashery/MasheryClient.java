@@ -204,7 +204,7 @@ public class MasheryClient {
      * @param resource - the resource to be created
      * @return - the Unique ID of the created resource
      */
-    public MasheryApiResponse createResource(MasheryResource resource) {
+    public MasheryApiResponse createResourceAndReturnId(MasheryResource resource) {
 
         if (resource == null) {
             log.error("Cannot create resource, resource is null");
@@ -273,7 +273,7 @@ public class MasheryClient {
 
             if (response.getEntity() != null) {
                 JsonNode jsonResponse = mapper.readTree(response.getEntity().getContent());
-                uniqueId = retrieveIdFromResponse(jsonResponse, "");
+                uniqueId = MasheryUtils.retrieveIdFromResponse(jsonResponse, "");
             }
         }
         catch (ClientProtocolException e) {
@@ -298,12 +298,11 @@ public class MasheryClient {
         return MasheryApiResponse.MasheryApiResponseBuilder().build(uniqueId, true, null);
     }
 
-
     /**
      * Modify the existing Mashery Resource via Mashery V3 API.
      *
      * @param resource - the resource to be modified with the parameters to be changed.
-     * @return - true iff the modify was successful.
+     * @return - true if the modify was successful.
      */
     public MasheryApiResponse modifyResource(MasheryResource resource) {
 
@@ -903,7 +902,7 @@ public class MasheryClient {
             return null;
         }
 
-        return retrieveIdFromResponse(responseNode, resourceName);
+        return MasheryUtils.retrieveIdFromResponse(responseNode, resourceName);
     }
 
     /**
@@ -944,7 +943,7 @@ public class MasheryClient {
                     String errorJson = MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper);
                     log.error("Error : >> " + errorJson);
                 }
-                else{
+                else {
                     log.error(MasheryClientError.NO_RESPONSE_FROM_API.getDescription());
                 }
             }
@@ -977,35 +976,194 @@ public class MasheryClient {
     }
 
     /**
-     * Retrieve the Unique Identifier from response body.
+     * Create the Mashery Resource via Mashery V3 API
      *
-     * @param responseNode - response body which contains unique id
-     * @return - Unique ID
+     * @param resource - the resource to be created
+     * @return - Complete response json
      */
-    private String retrieveIdFromResponse(JsonNode responseNode, String name) {
+    public String createResourceAndReturnCompleteResponse(MasheryResource resource) {
 
-        String id = null;
-        JsonNode node = null;
-
-        // Response will come back as array of one element
-        if (responseNode != null && responseNode.isArray()) {
-            ArrayNode arrayOfNodes = ((ArrayNode) responseNode);
-            for (int i = 0; i < arrayOfNodes.size(); i++) {
-                JsonNode nameNode = arrayOfNodes.get(i).get("name");
-                if (!nameNode.isNull() && nameNode.textValue().equals(name)) {
-                    node = arrayOfNodes.get(i);
-                }
-            }
-            if (node == null)
-                node = arrayOfNodes.get(0);
+        if (resource == null) {
+            log.error("Cannot create resource, resource is null");
+            return null;
         }
-        else
-            node = responseNode;
 
-        if (node != null && !node.get("id").isNull())
-            id = node.get("id").textValue();
+        if (readOnly) {
+            log.error("Attempted Create operation. User has read only permissions");
+            return null;
+        }
 
-        return id;
+        String[] tokenResponse = retrieveOauthToken();
+
+        if (tokenResponse[0] == null && tokenResponse[1] != null) {
+            log.error("Unable to retrieve OAuth token.");
+            return null;
+        }
+        HttpPost post;
+        String deployableAsString = null;
+        try {
+            post = new HttpPost(uriBuilder.setPath(resource.getResourcePath()).build());
+            deployableAsString = mapper.writeValueAsString(resource);
+            log.info("Request BODY: " + deployableAsString);
+            post.setEntity(new StringEntity(deployableAsString));
+            post.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+            post.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
+        }
+        catch (URISyntaxException e) {
+            log.error("Error creating resource: " + e);
+            return null;
+        }
+        catch (JsonProcessingException e) {
+            log.error("Error creating resource: " + e);
+            return null;
+        }
+        catch (UnsupportedEncodingException e) {
+            log.error("Error creating resource: " + e);
+            return null;
+        }
+
+        log.info("Creating new resource " + resource.getResourcePath());
+
+        HttpResponse response = null;
+        try {
+            response = httpClient.execute(post);
+
+            if (response == null) {
+                log.error("Could not create resource. No response from API.");
+                return null;
+            }
+
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                OAuthTokenService.INSTANCE.clearToken();
+                return null;
+            }
+            else if (statusCode != HttpStatus.SC_OK) {
+                log.error("Response error: " + response.getStatusLine().getStatusCode());
+                String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
+                log.error(errorInformationInResponse);
+                return null;
+            }
+
+            if (response.getEntity() != null) {
+                return IOUtils.toString(response.getEntity().getContent());
+            }
+        }
+        catch (ClientProtocolException e) {
+            log.error("Error creating resource: " + e);
+            return null;
+        }
+        catch (IOException e) {
+            log.error("Error creating resource: " + e);
+            return null;
+        }
+        finally {
+            if (response != null)
+                try {
+                    EntityUtils.consume(response.getEntity());
+                }
+                catch (IOException e) {
+                    // Ignore
+                }
+        }
+
+        return null;
+    }
+
+    /**
+     * Modify the existing Mashery Resource via Mashery V3 API.
+     *
+     * @param resource - the resource to be modified with the parameters to be changed.
+     * @return - Complete response json
+     */
+    public String modifyResourceAndReturnCompleteResponse(MasheryResource resource) {
+
+        if (resource == null) {
+            log.error("Cannot modify resource, resource is null");
+            return null;
+        }
+
+        if (readOnly) {
+            log.error("Attempted Modify operation. User has read only permissions");
+            return null;
+        }
+
+        String[] tokenResponse = retrieveOauthToken();
+        if (tokenResponse[0] == null && tokenResponse[1] != null) {
+            log.error("Unable to retrieve OAuth token.");
+            return null;
+        }
+        HttpPut put = null;
+        String deployableAsString = null;
+        try {
+            put = new HttpPut(uriBuilder.setPath(resource.getResourcePath()).build());
+            deployableAsString = mapper.writeValueAsString(resource);
+            log.info("Sending PUT request to:" + put.getURI().toString() + " Payload: " + deployableAsString);
+            put.setEntity(new StringEntity(deployableAsString));
+            put.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+            put.addHeader(MasheryUtils.createAuthHeader(tokenResponse[0]));
+        }
+        catch (URISyntaxException e) {
+            log.error("Error modifying resource. " + e);
+            return null;
+        }
+        catch (JsonProcessingException e) {
+            log.error("Error modifying resource. " + e);
+            return null;
+        }
+        catch (UnsupportedEncodingException e) {
+            log.error("Error modifying resource. " + e);
+            return null;
+        }
+
+        HttpResponse response = null;
+        int statusCode = 0;
+        try {
+            response = httpClient.execute(put);
+            if (response == null) {
+                log.error("Could not modify resource. No response from API.");
+                return null;
+            }
+
+            statusCode = response.getStatusLine().getStatusCode();
+
+            if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                log.error("Invalid Token, please retry.");
+                OAuthTokenService.INSTANCE.clearToken();
+                return null;
+            }
+
+            if (statusCode != HttpStatus.SC_OK && response != null) {
+                log.error("Response error: " + response.getStatusLine().getStatusCode());
+                String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
+                log.error(errorInformationInResponse);
+                return null;
+            }
+
+            if (response.getEntity() != null) {
+                return IOUtils.toString(response.getEntity().getContent());
+            }
+
+        }
+        catch (ClientProtocolException e) {
+            log.error("Error modifying resource. " + e);
+            return null;
+        }
+        catch (IOException e) {
+            log.error("Error modifying resource. " + e);
+            return null;
+        }
+        finally {
+            if (response != null)
+                try {
+                    EntityUtils.consume(response.getEntity());
+                }
+                catch (IOException e) {
+                    // Ignore
+                }
+        }
+        return null;
     }
 
 }

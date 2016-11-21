@@ -11,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * Utils class
@@ -78,6 +80,38 @@ public class MasheryUtils {
             log.error("Error retrieving error at method retrieveCompleteErrorResponseAsJson :" + e.getMessage());
         }
         return errorInformationInResponse;
+    }
+
+    /**
+     * Retrieve the Unique Identifier from response body.
+     *
+     * @param responseNode - response body which contains unique id
+     * @return - Unique ID
+     */
+    public static String retrieveIdFromResponse(JsonNode responseNode, String name) {
+
+        String id = null;
+        JsonNode node = null;
+
+        // Response will come back as array of one element
+        if (responseNode != null && responseNode.isArray()) {
+            ArrayNode arrayOfNodes = ((ArrayNode) responseNode);
+            for (int i = 0; i < arrayOfNodes.size(); i++) {
+                JsonNode nameNode = arrayOfNodes.get(i).get("name");
+                if (!nameNode.isNull() && nameNode.textValue().equals(name)) {
+                    node = arrayOfNodes.get(i);
+                }
+            }
+            if (node == null)
+                node = arrayOfNodes.get(0);
+        }
+        else
+            node = responseNode;
+
+        if (node != null && !node.get("id").isNull())
+            id = node.get("id").textValue();
+
+        return id;
     }
 
     /**
