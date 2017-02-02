@@ -1166,4 +1166,12 @@ public class MasheryClient {
         return null;
     }
 
+    public String retrieveEndpointFromService(String serviceName, String endpointName)
+    {
+        String endpointId = null;
+        String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
+        endpointId = determineResourceIdFromName(endpointName, String.format(ENDPOINTS_PATH, new Object[] { serviceId }));
+        return endpointId;
+    }
+
 }
