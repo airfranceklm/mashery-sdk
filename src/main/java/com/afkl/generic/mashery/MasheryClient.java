@@ -1174,4 +1174,26 @@ public class MasheryClient {
         return endpointId;
     }
 
+    public List<String> fetchPlanEndpointNames(String serviceName, String packageName, String planName)
+    {
+        String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
+        String packageId = determineResourceIdFromName(packageName, PACKAGES_PATH);
+        String planId = determineResourceIdFromName(planName, String.format(PLANS_PATH, packageId));
+
+        String planServicePath = String.format(PLAN_SERVICES_PATH, packageId, planId);
+        String resource = fetchResource(planServicePath + "/" + serviceId + "/endpoints", "");
+        JsonNode node = null;
+        List<String> endpointNames = new ArrayList<String>();
+        try {
+            node = mapper.readTree(resource);
+            for(JsonNode child : node){
+                endpointNames.add(child.get("name").textValue());
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return endpointNames;
+    }
 }
