@@ -107,7 +107,7 @@ public class MasheryClient {
 
         // Configure ObjectMapper
         mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_NULL);
     }
 
     /**
