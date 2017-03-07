@@ -107,7 +107,7 @@ public class MasheryClient {
 
         // Configure ObjectMapper
         mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_NULL);
     }
 
     /**
@@ -1191,7 +1191,7 @@ public class MasheryClient {
             }
         }
         catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error in fetching the plan endpoint names, Unable to parse the response  ", e.getMessage());
             return null;
         }
         return endpointNames;
