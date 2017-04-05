@@ -1,19 +1,18 @@
 package com.afkl.generic.mashery;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.afkl.generic.mashery.model.MasheryMethod;
+import com.afkl.generic.mashery.model.MasheryPackage;
+import com.afkl.generic.mashery.model.MasheryService;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
+import org.apache.http.*;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
@@ -28,17 +27,15 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.afkl.generic.mashery.model.MasheryMethod;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents an Http Client used for making API calls to Mashery
- *
  */
 public class MasheryClient {
 
@@ -57,6 +54,9 @@ public class MasheryClient {
 
     private static final String FILTER_QUERY = "filter=name:";
     private static final String GENERIC_JSON_RESOURCE = "{\"id\":\"%s\"}";
+
+    private static final String SERVICE_FIELDS = "fields=id,name,created,updated,editorHandle,revisionNumber,robotsPolicy,crossdomainPolicy,description,cache.cacheTtl,errorSets,qpsLimitOverall,rfc3986Encode,securityProfile,version";
+    private static final String PACKAGE_FIELDS = "fields=name,id,description,created,updated,keyAdapter,keyLength,nearQuotaThreshold,notifyAdminEmails,notifyAdminPeriod,notifyDeveloperPeriod,plans,sharedSecretLength,notifyAdminNearQuota,notifyAdminOverQuota,notifyAdminOverThrottle,notifyDeveloperNearQuota,notifyDeveloperOverQuota,notifyDeveloperOverThrottle";
 
     private final URIBuilder uriBuilder;
 
@@ -108,6 +108,7 @@ public class MasheryClient {
         // Configure ObjectMapper
         mapper = new ObjectMapper();
         mapper.setSerializationInclusion(Include.NON_NULL);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     /**
@@ -168,8 +169,7 @@ public class MasheryClient {
             if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
                 OAuthTokenService.INSTANCE.clearToken();
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.TOKEN_UNAUTHORIZED.getDescription());
-            }
-            else if (statusCode != HttpStatus.SC_OK) {
+            } else if (statusCode != HttpStatus.SC_OK) {
                 log.error("Response error: " + response.getStatusLine().getStatusCode());
                 String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                 log.error(errorInformationInResponse);
@@ -262,8 +262,7 @@ public class MasheryClient {
             if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
                 OAuthTokenService.INSTANCE.clearToken();
                 return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.TOKEN_UNAUTHORIZED.getDescription());
-            }
-            else if (statusCode != HttpStatus.SC_OK) {
+            } else if (statusCode != HttpStatus.SC_OK) {
                 log.error("Response error: " + response.getStatusLine().getStatusCode());
                 String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                 log.error(errorInformationInResponse);
@@ -400,7 +399,7 @@ public class MasheryClient {
         String token = OAuthTokenService.INSTANCE.retrieveToken(apiScope);
         if (token != null)
             // return token with no error message example : {12356,null};
-            return new String[] { token, null };
+            return new String[] {token, null};
         log.info("Either existing cached token expired OR belongs to different Area ID. So trying to retrieve new access token for given Area ID..");
         JsonNode responseNode = null;
         HttpResponse oauthResponse = null;
@@ -420,32 +419,32 @@ public class MasheryClient {
                 if (oauthResponse != null) {
                     log.error("OAuth Token Response Status: " + oauthResponse.getStatusLine().getStatusCode());
                     log.error(MasheryUtils.retrieveErrorFromResponse(oauthResponse));
-                    return new String[] { null, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ". Response Status: " + oauthResponse.getStatusLine().getStatusCode() + newLine + "Error Response : "
-                                    + newLine + oauthResponse.toString() };
+                    return new String[] {null, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ". Response Status: " + oauthResponse.getStatusLine().getStatusCode() + newLine + "Error Response : "
+                                    + newLine + oauthResponse.toString()};
                 }
-                return new String[] { null, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() };
+                return new String[] {null, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription()};
             }
             HttpEntity body = oauthResponse.getEntity();
             responseNode = mapper.readTree(body.getContent());
         }
         catch (URISyntaxException e) {
             log.error("Unable to fetch OAuth token " + e);
-            return new String[] { null, "Unable to fetch OAuth token " + MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + newLine + e.getMessage() };
+            return new String[] {null, "Unable to fetch OAuth token " + MasheryClientError.URI_SYNTAX_EXCEPTION.getDescription() + newLine + e.getMessage()};
             // return null;
         }
         catch (JsonProcessingException e) {
             log.error("Unable to fetch OAuth token " + e);
-            return new String[] { null, "Unable to fetch OAuth token " + MasheryClientError.JSON_PROCESSING_EXCEPTION.getDescription() + newLine + e.getMessage() };
+            return new String[] {null, "Unable to fetch OAuth token " + MasheryClientError.JSON_PROCESSING_EXCEPTION.getDescription() + newLine + e.getMessage()};
             // return null;
         }
         catch (IllegalStateException e) {
             log.error("Unable to fetch OAuth token " + e);
-            return new String[] { null, "Unable to fetch OAuth token " + MasheryClientError.ILLEGAL_STATE_EXCEPTION.getDescription() + newLine + e.getMessage() };
+            return new String[] {null, "Unable to fetch OAuth token " + MasheryClientError.ILLEGAL_STATE_EXCEPTION.getDescription() + newLine + e.getMessage()};
             // return null;
         }
         catch (IOException e) {
             log.error("Unable to fetch OAuth token " + e);
-            return new String[] { null, "Unable to fetch OAuth token " + MasheryClientError.IO_EXCEPTION.getDescription() + newLine + e.getMessage() };
+            return new String[] {null, "Unable to fetch OAuth token " + MasheryClientError.IO_EXCEPTION.getDescription() + newLine + e.getMessage()};
             // return null;
         }
         finally {
@@ -468,16 +467,16 @@ public class MasheryClient {
         OAuthTokenService.INSTANCE.putToken(accessToken, ttl, scope);
 
         // return accessToken;
-        return new String[] { accessToken, null };
+        return new String[] {accessToken, null};
     }
 
     /**
      * Generic add Endpoint to Plan. Will search for package with same name as service. Containing Plan named `default`
      *
-     * @param serviceName - Name of Service containing the endpoint
+     * @param serviceName  - Name of Service containing the endpoint
      * @param endpointName - Name of the Endpoint
-     * @param packageName - name of package containing plan to be updated
-     * @param planName - plan name where endpoint will be added
+     * @param packageName  - name of package containing plan to be updated
+     * @param planName     - plan name where endpoint will be added
      * @return masheryApiResponse - response object with status and error details
      */
     public MasheryApiResponse addEndpointToPlan(String endpointName, String planName, String serviceName, String packageName) {
@@ -524,8 +523,7 @@ public class MasheryClient {
                         return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine
                                         + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine + "Response Status: " + response.getStatusLine().getStatusCode());
                     }
-                }
-                else {
+                } else {
                     log.error("Error creating plan service " + planServicePath);
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription() + "Create plan Service -" + planServicePath);
                 }
@@ -554,8 +552,7 @@ public class MasheryClient {
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false,
                                     MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + ":" + newLine + MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper) + newLine
                                                     + "Error creating plan endpoint -" + post.getURI().toString() + " Status code: " + response.getStatusLine().getStatusCode());
-                }
-                else {
+                } else {
                     log.error("Error creating plan endpoint " + endpointId);
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription() + "Error creating plan endpoint -" + endpointId);
                 }
@@ -687,8 +684,7 @@ public class MasheryClient {
                     log.error("Error Response: " + responseError);
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false,
                                     MasheryClientError.RESPONSE_ERROR_FROM_API.getDescription() + "Error creating plan method" + ". Status code: " + response.getStatusLine().getStatusCode());
-                }
-                else {
+                } else {
                     log.error("Error creating plan method " + endpointId);
                     return MasheryApiResponse.MasheryApiResponseBuilder().build(null, false, MasheryClientError.NO_RESPONSE_FROM_API.getDescription() + "Error creating plan method -" + endpointId);
                 }
@@ -877,7 +873,7 @@ public class MasheryClient {
 
     /**
      * @param resourceName - the name of the resource to lookup
-     * @param path - that api path where to find the resource
+     * @param path         - that api path where to find the resource
      * @return the unique Id of the resource
      */
     private String determineResourceIdFromName(String resourceName, String path) {
@@ -907,8 +903,8 @@ public class MasheryClient {
 
     /**
      * Fetch generic resource via Mashery from the specified path and query
-     * 
-     * @param path - location of the resource
+     *
+     * @param path  - location of the resource
      * @param query - query param representing extra filter on resource fetch
      * @return response body as http entity
      */
@@ -942,12 +938,10 @@ public class MasheryClient {
                     log.error(errorInformationInResponse);
                     String errorJson = MasheryUtils.retrieveCompleteErrorResponseAsJson(errorInformationInResponse, mapper);
                     log.error("Error : >> " + errorJson);
-                }
-                else {
+                } else {
                     log.error(MasheryClientError.NO_RESPONSE_FROM_API.getDescription());
                 }
-            }
-            else if (response.getEntity() != null) {
+            } else if (response.getEntity() != null) {
                 return IOUtils.toString(response.getEntity().getContent());
             }
         }
@@ -973,6 +967,48 @@ public class MasheryClient {
                 }
         }
         return null;
+    }
+
+    public MasheryService fetchMasheryService(String serviceId) {
+        String serviceResponse = fetchResource(SERVICES_PATH + "/" + serviceId, SERVICE_FIELDS);
+        try {
+            return mapper.readValue(serviceResponse, MasheryService.class);
+        }
+        catch (IOException e) {
+            log.error(e.getMessage());
+            return null;
+        }
+    }
+
+    public MasheryPackage fetchMasheryPackageByName(String name) {
+        MasheryPackage masheryPackage = null;
+        try {
+            String serviceResponse = fetchResource(PACKAGES_PATH, FILTER_QUERY + URLEncoder.encode(name, "UTF-8") + "&" + PACKAGE_FIELDS);
+            MasheryPackage[] packageRes = mapper.readValue(serviceResponse, MasheryPackage[].class);
+            if (packageRes.length == 0) {
+                masheryPackage = null;
+            }
+            else if (packageRes.length > 1) {
+                for (MasheryPackage aPackage : packageRes) {
+                    if (MasheryUtils.isEqual(aPackage.getName(), name)) {
+                        masheryPackage = aPackage;
+                        break;
+                    }
+                }
+            }
+            else{
+                masheryPackage = packageRes[0];
+            }
+        }
+        catch (UnsupportedEncodingException e) {
+            log.error(e.getMessage());
+            masheryPackage = null;
+        }
+        catch (IOException e) {
+            log.error(e.getMessage());
+            masheryPackage = null;
+        }
+        return masheryPackage;
     }
 
     /**
@@ -1038,8 +1074,7 @@ public class MasheryClient {
             if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
                 OAuthTokenService.INSTANCE.clearToken();
                 return null;
-            }
-            else if (statusCode != HttpStatus.SC_OK) {
+            } else if (statusCode != HttpStatus.SC_OK) {
                 log.error("Response error: " + response.getStatusLine().getStatusCode());
                 String errorInformationInResponse = MasheryUtils.retrieveErrorFromResponse(response);
                 log.error(errorInformationInResponse);
@@ -1166,16 +1201,14 @@ public class MasheryClient {
         return null;
     }
 
-    public String retrieveEndpointFromService(String serviceName, String endpointName)
-    {
+    public String retrieveEndpointFromService(String serviceName, String endpointName) {
         String endpointId = null;
         String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
-        endpointId = determineResourceIdFromName(endpointName, String.format(ENDPOINTS_PATH, new Object[] { serviceId }));
+        endpointId = determineResourceIdFromName(endpointName, String.format(ENDPOINTS_PATH, new Object[] {serviceId}));
         return endpointId;
     }
 
-    public List<String> fetchPlanEndpointNames(String serviceName, String packageName, String planName)
-    {
+    public List<String> fetchPlanEndpointNames(String serviceName, String packageName, String planName) {
         String serviceId = determineResourceIdFromName(serviceName, SERVICES_PATH);
         String packageId = determineResourceIdFromName(packageName, PACKAGES_PATH);
         String planId = determineResourceIdFromName(planName, String.format(PLANS_PATH, packageId));
@@ -1186,7 +1219,7 @@ public class MasheryClient {
         List<String> endpointNames = new ArrayList<String>();
         try {
             node = mapper.readTree(resource);
-            for(JsonNode child : node){
+            for (JsonNode child : node) {
                 endpointNames.add(child.get("name").textValue());
             }
         }
