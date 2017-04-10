@@ -1,19 +1,17 @@
 package com.afkl.generic.mashery;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.afkl.generic.mashery.model.MasheryCors;
+import com.afkl.generic.mashery.model.MasheryMethod;
+import com.afkl.generic.mashery.model.MasherySystemDomainAuthentication;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
+import org.apache.http.*;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
@@ -28,13 +26,12 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.afkl.generic.mashery.model.MasheryMethod;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents an Http Client used for making API calls to Mashery
@@ -50,6 +47,8 @@ public class MasheryClient {
     private static final String SERVICES_PATH = ROOT_PATH + "services";
     private static final String ENDPOINTS_PATH = SERVICES_PATH + "/%s/endpoints";
     private static final String METHODS_PATH = ENDPOINTS_PATH + "/%s/methods";
+    private static final String CORS_PATH = ENDPOINTS_PATH + "/%s/cors";
+    private static final String SYSTEM_DOMAIN_AUTHENTICATION_PATH = ENDPOINTS_PATH + "/%s/systemDomainAuthentication";
     private static final String PACKAGES_PATH = ROOT_PATH + "packages";
     private static final String PLANS_PATH = PACKAGES_PATH + "/%s/plans";
     private static final String PLAN_SERVICES_PATH = PLANS_PATH + "/%s/services";
@@ -156,6 +155,7 @@ public class MasheryClient {
         HttpResponse response = null;
         int statusCode = 0;
         try {
+            log.info("Sending Delete request to:" + delete.getURI().toString());
             response = httpClient.execute(delete);
 
             if (response == null) {
@@ -1195,5 +1195,39 @@ public class MasheryClient {
             return null;
         }
         return endpointNames;
+    }
+
+    public MasheryCors fetchCors(String serviceId,String endpointId){
+        MasheryCors masheryCors = null;
+        String resourceString = fetchResource(String.format(CORS_PATH, serviceId, endpointId),"");
+        if(MasheryUtils.isEmpty(resourceString)){
+            log.error("CORS is not found for this endpoint");
+            return null;
+        }
+        try {
+            masheryCors = mapper.readValue(resourceString , MasheryCors.class);
+        }
+        catch (IOException e) {
+            log.error("Error in mapping cors resource ", e.getMessage());
+            return null;
+        }
+        return masheryCors;
+    }
+
+    public MasherySystemDomainAuthentication fetchSystemDomainAuthentication(String serviceId,String endpointId){
+        MasherySystemDomainAuthentication masherySystemDomainAuthentication = null;
+        String resourceString = fetchResource(String.format(SYSTEM_DOMAIN_AUTHENTICATION_PATH, serviceId, endpointId),"");
+        if(MasheryUtils.isEmpty(resourceString)){
+            log.error("SystemDomain Authentication is not found for this endpoint");
+            return null;
+        }
+        try {
+            masherySystemDomainAuthentication = mapper.readValue(resourceString , MasherySystemDomainAuthentication.class);
+        }
+        catch (IOException e) {
+            log.error("Error in mapping System Domain Authentication resource ", e.getMessage());
+            return null;
+        }
+        return masherySystemDomainAuthentication;
     }
 }
