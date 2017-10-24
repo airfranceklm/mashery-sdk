@@ -54,6 +54,8 @@ public class MasheryEndpoint implements MasheryResource {
 
 	private String jsonpCallbackParameterValue;
 
+	private boolean rateLimitHeadersEnabled;
+
 	private List<ForwardHeader> forwardedHeaders;
 
 	private List<ReturnHeader> returnedHeaders;
@@ -181,6 +183,10 @@ public class MasheryEndpoint implements MasheryResource {
 
 	public String getJsonpCallbackParameterValue() {
 		return jsonpCallbackParameterValue;
+	}
+
+	public boolean isRateLimitHeadersEnabled() {
+		return rateLimitHeadersEnabled;
 	}
 
 	public List<ForwardHeader> getForwardedHeaders() {
@@ -353,6 +359,10 @@ public class MasheryEndpoint implements MasheryResource {
 
 	public void setJsonpCallbackParameterValue(String jsonpCallbackParameterValue) {
 		this.jsonpCallbackParameterValue = jsonpCallbackParameterValue;
+	}
+
+	public void setRateLimitHeadersEnabled(boolean rateLimitHeadersEnabled) {
+		this.rateLimitHeadersEnabled = rateLimitHeadersEnabled;
 	}
 
 	public void setForwardedHeaders(List<ForwardHeader> forwardedHeaders) {
